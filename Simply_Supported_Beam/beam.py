@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sympy.plotting.plot import Plot
 
+
 """
 # About Beam library:
 A beam is a structural element that primarily resists loads applied laterally to the beam's axis.
@@ -21,6 +22,12 @@ Positive x-axis for beam: increases in right hand side
 Positive y-axis for beam: increases upward direction
 Positive angle direction: Counter clockwise with respect to beam positive x-axis
 Positive moment: Counter clockwise
+
+## Units Conventions:
+Length: meter
+Angle: degrees
+Load: kN
+Moment: kNm
 """
 
 class Beam:
@@ -61,7 +68,7 @@ class Beam:
         ### Description:
         Adds different load values and Reaction variables to generate symbolic expression of all loads
 
-        ### Arguments
+        #### Arguments
         `load_list` = List or Tuples of various load objects like `PointLoad, UDL, Reaction`
         """
         for loadtype in load_list:
@@ -83,7 +90,7 @@ class Beam:
         """
         Receives a list of moment generators classes like: PointLoad,  Reaction, PointMoment
         """
-        for mom_gen in load_list: 
+        for mom_gen in load_list:  #takes moment about origin and adds up
             if isinstance(mom_gen, PointLoad):
                 self.m += mom_gen.pos*mom_gen.load_y
             elif isinstance(mom_gen, Reaction):
@@ -122,6 +129,8 @@ class Beam:
                 self.mom_fn += mom_gen.load_y*sp.SingularityFunction('x', mom_gen.pos, 1)
             elif isinstance(mom_gen, Reaction):
                 self.mom_fn += mom_gen.ry_val*sp.SingularityFunction('x', mom_gen.pos, 1)
+                if hasattr(mom_gen, 'mom_val'):
+                    self.mom_fn += mom_gen.mom_val*sp.SingularityFunction('x', mom_gen.pos, 0)
             elif isinstance(mom_gen, PointMoment):
                 self.mom_fn -= mom_gen.mom*sp.SingularityFunction('x', mom_gen.pos, 0)
                 #because we have defined anticlockwise moment positive in PointMoment
@@ -163,13 +172,14 @@ class Load:
     '''
     Load class 
 
-    attributes:
-    pos(m): position of that netload with respect to beam coordinates's origin
-    load(kN): net load of that load type(for point load that is point load value, but it will be different 
-    for other loads like uvl and udl)
-    inverted(bool): default direction of positive net load is in positive direction of y-axes
-                by default inverted = False (load is facing upward)
-                use inverted=True to indicate load is in downward direction
+    ### Attributes:
+    `pos(float)`: `unit:meter` position of that netload with respect to beam coordinates's origin
+    `load(float)`: `unit:kN` net load of that load type(for point load that is point load value, 
+                            but it will be different 
+                            for other loads like uvl and udl)
+    `inverted(bool)=False`: Default direction of positive net load is in positive direction of y-axes
+    - by default: `inverted = False` (load is facing upward)
+    - use `inverted=True` to indicate load is in downward direction
 
     '''
 
@@ -184,16 +194,16 @@ class Load:
 
 class PointLoad(Load):
     """
+    ## Description 
     Subclass of Class Load
 
-    Attributes:
-    pos, load, inverted: inherit from super class
-    var: symbolic variable for that load(useful in case of reactions)
-    inclination(in degrees): angle made by direction of net load with positive direction of beam's x axis
+    ### Attributes:
+    `pos, load, inverted`: inherit from super class `Load`
+    `inclination(float)=90`: `unit=degree` represents angle made by direction of net load with positive direction of beam's x axis
                             inclination will be positive for counter clockwise direction
                             put negative inclination if you want to take angle in clockwise direction
-    load_x: component of net load value in positive direciton of beam's x-axis
-    load_y: component of net load value in positive y-direciton(upward direction)
+    `load_x`: component of net load value in positive direciton of beam's x-axis
+    `load_y`: component of net load value in positive y-direciton(upward direction)
     """
 
     def __init__(self, pos:float, load:float, inverted:bool=False, inclination=90, **kwargs):
@@ -204,7 +214,19 @@ class PointLoad(Load):
         self.load_y = round(self.load*np.sin(self.inclination*np.pi/180), ndigits=4)
 
 class UDL:
-    
+    """
+    ## Description
+    UDL is type of load that is combinaiton of infinite points load over certain length acting transverse to beam
+
+    ### Attributes:
+    `start(float)`:Start position of UDL
+    `loadpm(float)`: Load Per meter of udl
+    `span(float)`: Total length of udl
+    `inverted(bool) = True`: UDL facing downwards on beam,
+                                use `inverted=False` for upside udl
+    `self.netload(float)`: total effective load of udl
+    `self.netpos(float)`: position of effective load from beam origin
+    """
     def __init__(self, start:float, loadpm:float, span:float, inverted:bool=True, **kwargs):
         self.start = start #x coordinate of left edge of udl
         self.span = span #total length of udl
@@ -219,15 +241,17 @@ class UDL:
         self.netpos = self.start + self.span/2 #position of effective load of udl
 
 
-        
-        
-
-
 class Reaction():
     """
-    Reaction class
-    pos(float): position of reaction
-    type(string): 'roller','hinge','fixed' or 'r','h','f'
+    ## Description
+        Reactions are given by supports. 3 types of supports are defined for now
+        `hinge`, `roller` and `fixed` support.
+
+    ### Attributes
+    `pos(float)`: position of reaction
+    `type(string)`: `'roller'`,`'hinge'`,`'fixed'` or `'r'`,`'h'`,`'f'`
+    `rx_val, ry_val, mom_val`: variables to store numerical values for reaction loads and moments
+    `rx_var, ry_var, mom_var`: symbolic variable to store symbolic values for reactions
     """
     def __init__(self, pos, type:str, pos_sym):
         self.pos = pos
@@ -251,7 +275,10 @@ class Reaction():
 
 class PointMoment():
     """
-    ## Attributes
+    ## Description
+    Pure moment that act at point
+
+    ### Attributes
     `pos`: location of that point moment from beam's origin
     `mom`: value of that point moment
     `ccw`(bool)=`False` : counterclockwise direciton is positive value of moment, 
