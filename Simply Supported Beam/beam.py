@@ -9,22 +9,31 @@ import matplotlib.pyplot as plt
 from sympy.plotting.plot import Plot
 
 """
-Sign conventions for the program:
+# About Beam library:
+A beam is a structural element that primarily resists loads applied laterally to the beam's axis.
+Its mode of deflection is primarily by bending.
+
+This library has several class and their methods in order to solve a 2d Beam numerically and do beam analysis.
+
+## Sign Conventions:
 Positive x-axis for beam: increases in right hand side
 Positive y-axis for beam: increases upward direction
 Positive angle direction: Counter clockwise with respect to beam positive x-axis
-Positive moment: counter clockwise
+Positive moment: Counter clockwise
+
+
 """
 
 class Beam:
     """
-        2d model of a Beam
-        length(float): length of a beam
+        `Beam` is the main class to represent a beam object and perform various calculations.
+
+        ## Attributes
+        `length(float)`: length of a beam
         
-        kwargs:
-        E(float) = modulus of elasticity of beam material
-        I(float) = 2nd moment of area of the cross section of beam
-        supports(dict): dictionary of reactions and their types
+        `kwargs`: Here are few optional keyword arguments
+        - `E(float)` = Modulus of Elasticity of beam material 
+        - `I(float)` = 2nd moment of area of the cross section of beam
     """
     #initial kwargs lists for simply supported beam
     simply_supported = ('Elasticity', 'MOA')
@@ -45,11 +54,8 @@ class Beam:
         self.m = 0 #sp.symbols('m') #total sum of moments
     
         self.solved_rxns = None #initialize variable to store solved values for reactions
-        self.mom_fn = 0 #initialize variable to store moment fuction
-        self.shear_fn = 0 #initialize variable to store shear fuction
-
-    def sf(self,y,z):
-        return sp.SingularityFunction(self.x,y,z)
+        self.mom_fn = 0 #initialize variable to store bending moment values in numpy array
+        self.shear_fn = 0 #initialize variable to store shear values in numpy array
 
     def add_loads(self, load_list:list):
         for loadtype in load_list:
@@ -64,6 +70,9 @@ class Beam:
                 else:
                     self.fy += loadtype.ry_var
 
+            if isinstance(loadtype, UDL):
+                self.fy += loadtype.netload
+
     def add_moments(self, load_list):
         """
         Receives a list of moment generators classes like: PointLoad,  Reaction, PointMoment
@@ -77,6 +86,8 @@ class Beam:
                     self.m += mom_gen.mom_var
             elif isinstance(mom_gen, PointMoment):
                 self.m += mom_gen.mom
+            elif isinstance(mom_gen, UDL):
+                self.m += mom_gen.netpos*mom_gen.netload
 
     def calculate_reactions(self, reaction_list):
         Fx_eq = sp.Eq(self.fx,0)
@@ -99,7 +110,7 @@ class Beam:
                 if hasattr(rxn_obj, rxn_var):
                     setattr(rxn_obj, rxn_val, self.solved_rxns[getattr(rxn_obj, rxn_var)])
 
-    def moment_equation(self, loads):
+    def generate_moment_equation(self, loads):
         for mom_gen in loads:
             if isinstance(mom_gen, PointLoad):
                 self.mom_fn += mom_gen.load_y*sp.SingularityFunction('x', mom_gen.pos, 1)
@@ -108,6 +119,31 @@ class Beam:
             elif isinstance(mom_gen, PointMoment):
                 self.mom_fn += mom_gen.mom*sp.SingularityFunction('x', mom_gen.pos, 0)
                 #because we have defined anticlockwise moment positive in PointMoment
+            elif isinstance(mom_gen, UDL):
+                self.mom_fn += mom_gen.loadpm*sp.SingularityFunction('x', mom_gen.start, 2)/2
+                if mom_gen.end < self.length:
+                    self.mom_fn += mom_gen.loadpm*sp.SingularityFunction('x', mom_gen.start, 2)/2
+        
+        #in order to lambdify moment_equation and vectorize it:
+        self.mom_fn = sp.lambdify(self.x, self.mom_fn, 'sympy')
+        self.mom_fn =  np.vectorize(self.mom_fn)
+
+    def generate_shear_equation(self, loads):
+        for force_gen in loads:
+            if isinstance(force_gen, PointLoad):
+                self.shear_fn += force_gen.load_y*sp.SingularityFunction('x', force_gen.pos, 0)
+            elif isinstance(force_gen, Reaction):
+                self.shear_fn += force_gen.ry_val*sp.SingularityFunction('x', force_gen.pos, 0)
+            elif isinstance(force_gen, UDL):
+                self.shear_fn += force_gen.loadpm*sp.SingularityFunction('x', force_gen.start, 1)
+                if force_gen.end < self.length: #add udl in opposite direction
+                    self.shear_fn -= force_gen.loadpm*sp.SingularityFunction('x', force_gen.end, 1)
+
+        self.shear_fn = sp.lambdify(self.x, self.shear_fn, 'sympy')
+        self.shear_fn = np.vectorize(self.shear_fn)
+
+    def dummy_udl(self, udl):
+        pass
 
     def show_graph(self):
         title = "Bending Moment Diagram"
@@ -161,6 +197,26 @@ class PointLoad(Load):
         self.load_x = round(self.load*np.cos(self.inclination*np.pi/180), ndigits=4)
         self.load_y = round(self.load*np.sin(self.inclination*np.pi/180), ndigits=4)
 
+class UDL:
+    
+    def __init__(self, start:float, loadpm:float, span:float, inverted:bool=True, **kwargs):
+        self.start = start #x coordinate of left edge of udl
+        self.span = span #total length of udl
+        self.end = start + span
+        self.inverted = inverted
+        if self.inverted:
+            self.loadpm = -1*loadpm
+        else:
+            self.loadpm = loadpm
+        
+        self.netload = self.loadpm * self.span #netload of udl
+        self.netpos = self.start + self.span/2 #position of effective load of udl
+
+
+        
+        
+
+
 class Reaction():
     """
     Reaction class
@@ -189,10 +245,10 @@ class Reaction():
 
 class PointMoment():
     """
-    Class: PointMoment
-    pos: location of that point moment from beam's origin
-    mom: value of that point moment
-    ccw(bool)=False : counterclockwise direciton is positive value of moment, 
+    ## Attributes
+    `pos`: location of that point moment from beam's origin
+    `mom`: value of that point moment
+    `ccw`(bool)=`False` : counterclockwise direciton is positive value of moment, 
                 by defalut: ccw=False and given moment is positive
     
     """
@@ -206,18 +262,5 @@ class PointMoment():
 
 
 
-b = Beam(length=10)
-p = PointLoad(b.length/2, 10, True)
-ra = Reaction(0, 'r', 'A')
-rb = Reaction(b.length, 'h', 'B')
-print(ra.ry_val, rb.rx_val, rb.ry_val)
-b.add_loads((p,ra,rb))
-b.add_moments((p,ra,rb))
-print(b.fx, b.fy, b.m)
-b.calculate_reactions((ra,rb))
-print(b.solved_rxns)
-print(b.solved_rxns[rb.ry_var])
-print(ra.ry_val, rb.rx_val, rb.ry_val)
-b.moment_equation([p,ra,rb])
-print(b.mom_fn)
-b.show_graph()
+
+
