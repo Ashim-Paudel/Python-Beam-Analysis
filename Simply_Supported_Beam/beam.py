@@ -3,6 +3,7 @@ from inspect import Attribute
 from logging import raiseExceptions
 import math
 import re
+from typing import Iterable
 import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,8 +21,6 @@ Positive x-axis for beam: increases in right hand side
 Positive y-axis for beam: increases upward direction
 Positive angle direction: Counter clockwise with respect to beam positive x-axis
 Positive moment: Counter clockwise
-
-
 """
 
 class Beam:
@@ -57,7 +56,14 @@ class Beam:
         self.mom_fn = 0 #initialize variable to store bending moment values in numpy array
         self.shear_fn = 0 #initialize variable to store shear values in numpy array
 
-    def add_loads(self, load_list:list):
+    def add_loads(self, load_list):
+        """
+        ### Description:
+        Adds different load values and Reaction variables to generate symbolic expression of all loads
+
+        ### Arguments
+        `load_list` = List or Tuples of various load objects like `PointLoad, UDL, Reaction`
+        """
         for loadtype in load_list:
             if isinstance(loadtype, PointLoad): 
                 self.fx += loadtype.load_x
@@ -101,7 +107,7 @@ class Beam:
             for rxn_var in possible_rxn:
                 if hasattr(rxn_obj, rxn_var):
                     eval_values.append(getattr(rxn_obj, rxn_var))
-
+        print(eval_values)
         self.solved_rxns = sp.solve([Fx_eq, Fy_eq, M_eq], eval_values)
 
         #now assign values to the reaction objects too:
@@ -117,7 +123,7 @@ class Beam:
             elif isinstance(mom_gen, Reaction):
                 self.mom_fn += mom_gen.ry_val*sp.SingularityFunction('x', mom_gen.pos, 1)
             elif isinstance(mom_gen, PointMoment):
-                self.mom_fn += mom_gen.mom*sp.SingularityFunction('x', mom_gen.pos, 0)
+                self.mom_fn -= mom_gen.mom*sp.SingularityFunction('x', mom_gen.pos, 0)
                 #because we have defined anticlockwise moment positive in PointMoment
             elif isinstance(mom_gen, UDL):
                 self.mom_fn += mom_gen.loadpm*sp.SingularityFunction('x', mom_gen.start, 2)/2
