@@ -3,10 +3,10 @@ from inspect import Attribute
 from logging import raiseExceptions
 import math
 import re
-from turtle import pos, position
 import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
+from sympy.plotting.plot import Plot
 
 """
 Sign conventions for the program:
@@ -45,6 +45,8 @@ class Beam:
         self.m = 0 #sp.symbols('m') #total sum of moments
     
         self.solved_rxns = None #initialize variable to store solved values for reactions
+        self.mom_fn = 0 #initialize variable to store moment fuction
+        self.shear_fn = 0 #initialize variable to store shear fuction
 
     def sf(self,y,z):
         return sp.SingularityFunction(self.x,y,z)
@@ -96,6 +98,24 @@ class Beam:
             for (rxn_val,rxn_var) in zip(possible_values, possible_rxn):
                 if hasattr(rxn_obj, rxn_var):
                     setattr(rxn_obj, rxn_val, self.solved_rxns[getattr(rxn_obj, rxn_var)])
+
+    def moment_equation(self, loads):
+        for mom_gen in loads:
+            if isinstance(mom_gen, PointLoad):
+                self.mom_fn += mom_gen.load_y*sp.SingularityFunction('x', mom_gen.pos, 1)
+            elif isinstance(mom_gen, Reaction):
+                self.mom_fn += mom_gen.ry_val*sp.SingularityFunction('x', mom_gen.pos, 1)
+            elif isinstance(mom_gen, PointMoment):
+                self.mom_fn += mom_gen.mom*sp.SingularityFunction('x', mom_gen.pos, 0)
+                #because we have defined anticlockwise moment positive in PointMoment
+
+    def show_graph(self):
+        title = "Bending Moment Diagram"
+        xlabel = "Beam Length"
+        ylabel = "Moment(kNm)"
+        xlim = (0, self.length)
+        size = (10,7)
+        sp.plot(self.mom_fn)
 
 class Load:
     '''
@@ -198,3 +218,6 @@ b.calculate_reactions((ra,rb))
 print(b.solved_rxns)
 print(b.solved_rxns[rb.ry_var])
 print(ra.ry_val, rb.rx_val, rb.ry_val)
+b.moment_equation([p,ra,rb])
+print(b.mom_fn)
+b.show_graph()
