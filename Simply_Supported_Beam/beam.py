@@ -63,13 +63,17 @@ class Beam:
         self.mom_fn = 0 #initialize variable to store bending moment values in numpy array
         self.shear_fn = 0 #initialize variable to store shear values in numpy array
 
-    def add_loads(self, load_list):
+    def add_loads(self, load_list:object):
         """
         ### Description:
         Adds different load values and Reaction variables to generate symbolic expression of all loads
+        This will add respective component of different netload values. 
+        `self.fx: x-components` and 
+        `self.fy: y-components`
 
         #### Arguments
         `load_list` = List or Tuples of various load objects like `PointLoad, UDL, Reaction`
+
         """
         for loadtype in load_list:
             if isinstance(loadtype, PointLoad): 
@@ -84,13 +88,22 @@ class Beam:
                     self.fy += loadtype.ry_var
 
             if isinstance(loadtype, UDL):
-                self.fy += loadtype.netload
+                self.fy += loadtype.netload #adds net load value of udl object
 
-    def add_moments(self, load_list):
+    def add_moments(self, momgen_list:object):
         """
-        Receives a list of moment generators classes like: PointLoad,  Reaction, PointMoment
+        ### Description
+        Receives a list or tuple of `PointLoad`, `Reaction`, `UDL` or `PointMoment` objects.
+        Adds the moment due to those objects about origin.
+
+        #### Sign Convention: 
+        Anticlockwise moment are positively added. So, positive forces will give anticlockwise moments.
+
+        #### Arguments and terms:
+        - `momgen_list` = List or Tuples of various moment generators like `PointLoad, UDL, Reaction, PointMoment`
+        - `mom_gen(local variable)` = One which is capable of generating moment.
         """
-        for mom_gen in load_list:  #takes moment about origin and adds up
+        for mom_gen in momgen_list:  #takes moment about origin and adds up
             if isinstance(mom_gen, PointLoad):
                 self.m += mom_gen.pos*mom_gen.load_y
             elif isinstance(mom_gen, Reaction):
@@ -102,7 +115,16 @@ class Beam:
             elif isinstance(mom_gen, UDL):
                 self.m += mom_gen.netpos*mom_gen.netload
 
-    def calculate_reactions(self, reaction_list):
+    def calculate_reactions(self, reaction_list:object):
+        """
+        ### Description
+        1. Generates 3 equations of static equilibrium: `self.fx=0 , self.fy=0,  self.m=0`.
+        2. Uses `sympy.solve` to solve for symbolic variables `'rx_var', 'ry_var', 'mom_var'` in those equations. 
+        3. Assign those values for unknown value of reactions object: `rx_val, ry_val, mom_val`.
+
+        #### Arguments
+        List or tuple of unknown reaction objects
+        """
         Fx_eq = sp.Eq(self.fx,0)
         Fy_eq = sp.Eq(self.fy,0)
         M_eq = sp.Eq(self.m, 0)
@@ -123,7 +145,17 @@ class Beam:
                 if hasattr(rxn_obj, rxn_var):
                     setattr(rxn_obj, rxn_val, self.solved_rxns[getattr(rxn_obj, rxn_var)])
 
-    def generate_moment_equation(self, loads):
+    def generate_moment_equation(self, loads:object):
+        """
+        ### Description
+        1. Generates Macaulay's Equation for Moment due to various moment generators
+        2. Assigns symbolic expression of BM to `self.mom_fn` attribute 
+        3. Reassigns lambdified expression of BM to `self.mom_fn`
+        4. Reassigns `numpy.vectorize()` expression to `self.mom_fn`
+
+        #### Arguments
+        List or Tuple of various moment generating objects:`PointLoad`, `Reaction`, `UDL` or `PointMoment`
+        """
         for mom_gen in loads:
             if isinstance(mom_gen, PointLoad):
                 self.mom_fn += mom_gen.load_y*sp.SingularityFunction('x', mom_gen.pos, 1)
@@ -144,6 +176,16 @@ class Beam:
         self.mom_fn =  np.vectorize(self.mom_fn)
 
     def generate_shear_equation(self, loads):
+        """
+        ### Description
+        1. Generates Macaulay's Equation for Shear Force due to various force generators
+        2. Assigns symbolic expression of ShearForce to `self.shear_fn` attribute 
+        3. Reassigns lambdified expression of ShearForce to `self.shear_fn`
+        4. Reassigns `numpy.vectorize()` expression to `self.shear_fn`
+
+        #### Arguments
+        List or Tuple of various force generating objects:`PointLoad`, `Reaction`, `UDL` 
+        """
         for force_gen in loads:
             if isinstance(force_gen, PointLoad):
                 self.shear_fn += force_gen.load_y*sp.SingularityFunction('x', force_gen.pos, 0)
@@ -156,17 +198,6 @@ class Beam:
 
         self.shear_fn = sp.lambdify(self.x, self.shear_fn, 'sympy')
         self.shear_fn = np.vectorize(self.shear_fn)
-
-    def dummy_udl(self, udl):
-        pass
-
-    def show_graph(self):
-        title = "Bending Moment Diagram"
-        xlabel = "Beam Length"
-        ylabel = "Moment(kNm)"
-        xlim = (0, self.length)
-        size = (10,7)
-        sp.plot(self.mom_fn)
 
 class Load:
     '''
