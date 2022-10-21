@@ -90,7 +90,7 @@ class Beam:
             if isinstance(loadtype, UDL):
                 self.fy += loadtype.netload #adds net load value of udl object
 
-    def add_moments(self, momgen_list:object):
+    def add_moments(self, momgen_list:object, about:float=0):
         """
         ### Description
         Receives a list or tuple of `PointLoad`, `Reaction`, `UDL` or `PointMoment` objects.
@@ -101,19 +101,20 @@ class Beam:
 
         #### Arguments and terms:
         - `momgen_list` = List or Tuples of various moment generators like `PointLoad, UDL, Reaction, PointMoment`
+        - `about = 0`= Take moment about that x-coordinate in beam. `Default = 0, range = (0, self.length)`
         - `mom_gen(local variable)` = One which is capable of generating moment.
         """
         for mom_gen in momgen_list:  #takes moment about origin and adds up
             if isinstance(mom_gen, PointLoad):
-                self.m += mom_gen.pos*mom_gen.load_y
+                self.m += (mom_gen.pos-about)*mom_gen.load_y
             elif isinstance(mom_gen, Reaction):
-                self.m += mom_gen.pos*mom_gen.ry_var
+                self.m += (mom_gen.pos-about)*mom_gen.ry_var
                 if hasattr(mom_gen, 'mom_var'):
                     self.m += mom_gen.mom_var
             elif isinstance(mom_gen, PointMoment):
                 self.m += mom_gen.mom
             elif isinstance(mom_gen, UDL):
-                self.m += mom_gen.netpos*mom_gen.netload
+                self.m += (mom_gen.netpos-about)*mom_gen.netload
 
     def calculate_reactions(self, reaction_list:object):
         """
@@ -162,14 +163,14 @@ class Beam:
             elif isinstance(mom_gen, Reaction):
                 self.mom_fn += mom_gen.ry_val*sp.SingularityFunction('x', mom_gen.pos, 1)
                 if hasattr(mom_gen, 'mom_val'):
-                    self.mom_fn += mom_gen.mom_val*sp.SingularityFunction('x', mom_gen.pos, 0)
+                    self.mom_fn -= mom_gen.mom_val*sp.SingularityFunction('x', mom_gen.pos, 0)
             elif isinstance(mom_gen, PointMoment):
                 self.mom_fn -= mom_gen.mom*sp.SingularityFunction('x', mom_gen.pos, 0)
                 #because we have defined anticlockwise moment positive in PointMoment
             elif isinstance(mom_gen, UDL):
                 self.mom_fn += mom_gen.loadpm*sp.SingularityFunction('x', mom_gen.start, 2)/2
                 if mom_gen.end < self.length:
-                    self.mom_fn += mom_gen.loadpm*sp.SingularityFunction('x', mom_gen.start, 2)/2
+                    self.mom_fn -= mom_gen.loadpm*sp.SingularityFunction('x', mom_gen.end, 2)/2
         
         #in order to lambdify moment_equation and vectorize it:
         self.mom_fn = sp.lambdify(self.x, self.mom_fn, 'sympy')
