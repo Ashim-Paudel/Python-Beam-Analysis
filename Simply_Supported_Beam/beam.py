@@ -272,8 +272,31 @@ class UDL:
         self.netload = self.loadpm * self.span #netload of udl
         self.netpos = self.start + self.span/2 #position of effective load of udl
 
+class UVL:
+    def __init__(self, start:float, startload:float, span:float, endload:float, inverted:bool=True, **kwargs):
+        self.start = start
+        self.span = span
+        self.end = span+start
+        self.inverted = inverted
+        if self.inverted:
+            self.startload = -1*startload
+            self.endload = -1*endload
+        else:
+            self.startload = startload
+            self.endload = endload
+    
+        self.tload = self.span*abs(self.endload-self.startload)/2 #for upper triangular part: 1/2*b*h
+        self.rload = self.span*min(abs(self.startload), abs(self.endload)) #for lowe rectangular part: b*h
+        
 
-class Reaction():
+        self.netload = self.span*(self.startload + self.endload)/2  #net load
+        
+        if abs(self.endload) > abs(self.startload):
+            self.netpos = self.start + (2*self.tload*self.span/3 + self.rload*self.span/2)/abs(self.netload)
+        else:
+            self.netpos = self.start + (self.tload*self.span/3 + self.rload*self.span/2)/abs(self.netload)
+
+class Reaction:
     """
     ## Description
         Reactions are given by supports. 3 types of supports are defined for now
@@ -324,8 +347,3 @@ class PointMoment():
             self.mom = mom
         else:
             self.mom = -1*mom
-
-
-
-
-
