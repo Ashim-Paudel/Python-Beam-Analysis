@@ -1,0 +1,33 @@
+from beam import *
+
+b = Beam(10)
+ra = Reaction(0, 'h', 'A')
+p1 = PointLoad(1,100, inverted=True, inclination=40)
+m1 = PointMoment(2.5,20, ccw=False)
+rd = Reaction(3.5, 'r', 'D')
+h = Hinge(5)
+udl = UDL(5,10,2)
+rf = Reaction(7, 'r', 'F')
+p2 = PointLoad(b.length, 50, inverted=True)
+
+elements = (udl, p1, p2, m1,h, ra, rd, rf)
+b.add_loads((udl, p1, p2, ra, rd, rf))
+b.add_moments((udl, p1, p2, m1, h, ra, rd, rf), about=3.5)
+b.calculate_reactions((ra,rd, rf))
+b.generate_moment_equation((udl, p1, p2, m1, ra, rd, rf))
+b.generate_shear_equation((udl, p1, p2, m1, ra, rd, rf))
+
+
+x = np.linspace(-1, b.length, 1000)
+plt.rc('font', family='serif', size=14)
+fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="BMD vs SFD")
+ax.plot(x, b.mom_fn(x), label="BMD (kNm)")
+ax.plot(x, b.shear_fn(x), label="SFD (kN)")
+ax.set_xticks(np.arange(0, b.length+1,1))
+ax.axhline(y=0, color='k', label='beam')
+ax.set_title("BMD vs SFD of Beam")
+ax.set_xlabel("x (m)")
+ax.legend(fontsize=8)
+ax.grid()
+plt.savefig(f"Simply_Supported_Beam/generated_images/{__file__.split('/')[-1]}.png")
+plt.show()

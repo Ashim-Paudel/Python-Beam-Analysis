@@ -1,20 +1,23 @@
 from beam import *
+# gbm book page: 28 qn 1
+# test question form SOM book by GBM
 
-# q:b -> https://learnaboutstructures.com/sites/default/files/images/3-Frames/Problem-4-1.png
+b = Beam(11)
+udl = UDL(0,10,4)
+p1 = PointLoad(6,50, inverted=True)
+m = PointMoment(6,50, ccw=False)
+p2 = PointLoad(b.length, 80, inverted=True, inclination=30)
+ra = Reaction(0, 'h', 'A')
+rd = Reaction(8, 'r', 'D')
 
-b = Beam(16)
-ra = Reaction(0, 'f', 'A')
-h = Hinge(6)
-p = PointLoad(10,117,inverted=True, inclination=53.1301024)
-m = PointMoment(b.length, 65, ccw=False)
-rd = Reaction(b.length, 'r', 'D')
+print(p1.load_x, p1.load_y)
+print(p2.load_x, p2.load_y)
 
-b.add_loads((ra, p, rd))
-b.add_moments((ra, h, p, m, rd))
+b.add_loads((udl, p1, p2, ra, rd))
+b.add_moments((udl, p1, m, p2, ra, rd))
 b.calculate_reactions((ra,rd))
-b.generate_moment_equation((ra, p, m,rd))
-b.generate_shear_equation((ra, p, m,rd))
-
+b.generate_moment_equation((udl, p1, m, p2, ra, rd))
+b.generate_shear_equation((udl, p1, p2, ra, rd))
 
 x = np.linspace(-1, b.length, 1000)
 plt.rc('font', family='serif', size=14)
