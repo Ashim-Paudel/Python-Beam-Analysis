@@ -128,12 +128,12 @@ class Beam:
             elif isinstance(mom_gen, Hinge):
                 # dictionary of load separated to left and right of hinge
                 separate_load = {
-                    'l': [mgen for mgen in momgen_list if mgen.pos < mom_gen.pos & ~isinstance(mgen, Hinge)],
+                    'l': [mgen for mgen in momgen_list if mgen.pos < mom_gen.pos],
                     # 'l' = moment generators to left of hinge
-                    'r': [mgen for mgen in momgen_list if mgen.pos > mom_gen.pos & ~isinstance(mgen, Hinge)]
+                    'r': [mgen for mgen in momgen_list if mgen.pos > mom_gen.pos]
                     # 'r' =  moment generators to right of hinge
                 }
-
+                                
                 # now take loads according to side specified in hinge class
                 for side_mom_gen in separate_load[mom_gen.side[0]]:
                     if isinstance(side_mom_gen, PointLoad):
@@ -144,10 +144,16 @@ class Beam:
                                          mom_gen.pos)*side_mom_gen.ry_var
                         if hasattr(side_mom_gen, 'mom_var'):
                             self.m_hinge += side_mom_gen.mom_var
+                    elif isinstance(side_mom_gen, PointMoment):
+                        self.m_hinge += side_mom_gen.mom
                     elif isinstance(side_mom_gen, UDL):
-                        if side_mom_gen.end > mom_gen.pos:
-                            cut_udl = UDL(
-                                side_mom_gen.start, side_mom_gen.loadpm, mom_gen.pos-side_mom_gen.end)
+                        if side_mom_gen.end > mom_gen.pos & side_mom_gen.start<mom_gen.pos:
+                            # cut and take left portion of udl
+                            if mom_gen.side[0]=='l':
+                                cut_udl = UDL(side_mom_gen.start, side_mom_gen.loadpm, mom_gen.pos-side_mom_gen.end)
+                            else:
+                                cut_udl = UDL(mom_gen.pos, side_mom_gen.loadpm, side_mom_gen.end-mom_gen.pos)
+
                             self.m_hinge += cut_udl.netload * \
                                 (cut_udl.pos-mom_gen.pos)
                         else:
