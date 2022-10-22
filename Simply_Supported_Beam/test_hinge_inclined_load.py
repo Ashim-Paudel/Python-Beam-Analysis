@@ -1,16 +1,20 @@
 from beam import *
 
-b= Beam(18)
-ra = Reaction(0, 'f', 'A')
-rb = Reaction(b.length, 'r', 'B')
-h = Hinge(8, side='right')
-p = PointLoad(13,4,True)
+# q:b -> https://learnaboutstructures.com/sites/default/files/images/3-Frames/Problem-4-1.png
 
-b.add_loads((ra, rb, p))
-b.add_moments((ra, rb, p, h))
-b.calculate_reactions((ra,rb))
-b.generate_moment_equation((ra,rb,p))
-b.generate_shear_equation((ra ,rb, p))
+b = Beam(16)
+ra = Reaction(0, 'f', 'A')
+h = Hinge(6)
+p = PointLoad(10,117,inverted=True, inclination=53.1301024)
+m = PointMoment(b.length, 65, ccw=False)
+rd = Reaction(b.length, 'r', 'D')
+
+b.add_loads((ra, p, rd))
+b.add_moments((ra, h, p, m, rd))
+b.calculate_reactions((ra,rd))
+b.generate_moment_equation((ra, p, m,rd))
+b.generate_shear_equation((ra, p, m,rd))
+
 
 x = np.linspace(-1, b.length, 1000)
 plt.rc('font', family='serif', size=14)

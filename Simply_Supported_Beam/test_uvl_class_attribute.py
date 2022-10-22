@@ -7,14 +7,14 @@ uvl4 = UVL(start=2, startload=2, span=5, endload=4, inverted=False) #trapezoidal
 
 
 print(uvl.tload, uvl.rload)
-print(uvl.netload, uvl.netpos)
+print(uvl.netload, uvl.pos)
 
 print(uvl2.tload, uvl2.rload)
-print(uvl2.netload, uvl2.netpos)
+print(uvl2.netload, uvl2.pos)
 
 print(uvl3.tload, uvl3.rload)
-print(uvl3.netload, uvl3.netpos)
+print(uvl3.netload, uvl3.pos)
 
 
 print(uvl4.tload, uvl4.rload)
-print(uvl4.netload, uvl4.netpos)
+print(uvl4.netload, uvl4.pos)

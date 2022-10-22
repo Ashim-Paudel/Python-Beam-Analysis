@@ -113,40 +113,46 @@ class Beam:
             if isinstance(mom_gen, PointLoad):
                 self.m += (mom_gen.pos-about)*mom_gen.load_y
             elif isinstance(mom_gen, UDL):
-                self.m += (mom_gen.netpos-about)*mom_gen.netload
+                self.m += (mom_gen.pos-about)*mom_gen.netload
             elif isinstance(mom_gen, UVL):
-                self.m += (mom_gen.netpos-about)*mom_gen.netload
+                self.m += (mom_gen.pos-about)*mom_gen.netload
             elif isinstance(mom_gen, Reaction):
                 self.m += (mom_gen.pos-about)*mom_gen.ry_var
                 if hasattr(mom_gen, 'mom_var'):
                     self.m += mom_gen.mom_var
             elif isinstance(mom_gen, PointMoment):
                 self.m += mom_gen.mom
+
+            #for internal hinge
             elif isinstance(mom_gen, Hinge):
-                if mom_gen.side[0] == 'l':
-                    left_loads = [mgen for mgen in momgen_list if mgen.pos<mom_gen.pos & ~isinstance(mgen, Hinge)]
-                    for left_mom_gen  in left_loads:
-                        if isinstance(left_mom_gen, PointLoad):
-                            self.m_hinge += (left_mom_gen.pos-mom_gen.pos)*left_mom_gen.load_y
-                        elif isinstance(left_mom_gen, Reaction):
-                            self.m_hinge += (left_mom_gen.pos-mom_gen.pos)*left_mom_gen.ry_var
-                            if hasattr(left_mom_gen, 'mom_var'):
-                                self.m_hinge += left_mom_gen.mom_var
-                        elif isinstance(left_mom_gen, UDL):
-                            if left_mom_gen.end > mom_gen.pos:
-                                cut_udl = UDL(left_mom_gen.start, left_mom_gen.loadpm, mom_gen.pos-left_mom_gen.end)
-                                self.m_hinge += cut_udl.netload * (cut_udl.netpos-mom_gen.pos)
-                            else:
-                                self.m_hinge += left_mom_gen.netload * (left_mom_gen.netpos-mom_gen.pos)
-                        #elif isinstance(left_mom_gen, UVL):
-                        #self.m_hinge += (left_mom_gen.netpos-about)*left_mom_gen.netload
-                        elif isinstance(left_mom_gen, Reaction):
-                            self.m_hinge += (left_mom_gen.pos-about)*left_mom_gen.ry_var
-                            if hasattr(left_mom_gen, 'mom_var'):
-                                self.m_hinge += left_mom_gen.mom_var
-                        
-
-
+                #dictionary of load separated to left and right of hinge
+                separate_load = {
+                    'l':[mgen for mgen in momgen_list if mgen.pos<mom_gen.pos & ~isinstance(mgen, Hinge)], 
+                        # 'l' = moment generators to left of hinge
+                    'r':[mgen for mgen in momgen_list if mgen.pos>mom_gen.pos & ~isinstance(mgen, Hinge)]  
+                        #'r' =  moment generators to right of hinge
+                    }
+                
+                #now take loads according to side specified in hinge class
+                for side_mom_gen  in separate_load[mom_gen.side[0]]:
+                    if isinstance(side_mom_gen, PointLoad):
+                        self.m_hinge += (side_mom_gen.pos-mom_gen.pos)*side_mom_gen.load_y
+                    elif isinstance(side_mom_gen, Reaction):
+                        self.m_hinge += (side_mom_gen.pos-mom_gen.pos)*side_mom_gen.ry_var
+                        if hasattr(side_mom_gen, 'mom_var'):
+                            self.m_hinge += side_mom_gen.mom_var
+                    elif isinstance(side_mom_gen, UDL):
+                        if side_mom_gen.end > mom_gen.pos:
+                            cut_udl = UDL(side_mom_gen.start, side_mom_gen.loadpm, mom_gen.pos-side_mom_gen.end)
+                            self.m_hinge += cut_udl.netload * (cut_udl.pos-mom_gen.pos)
+                        else:
+                            self.m_hinge += side_mom_gen.netload * (side_mom_gen.pos-mom_gen.pos)
+                    #elif isinstance(left_mom_gen, UVL):
+                    #self.m_hinge += (left_mom_gen.netpos-about)*left_mom_gen.netload
+                    elif isinstance(side_mom_gen, Reaction):
+                        self.m_hinge += (side_mom_gen.pos-about)*side_mom_gen.ry_var
+                        if hasattr(side_mom_gen, 'mom_var'):
+                            self.m_hinge += side_mom_gen.mom_var
 
 
     def calculate_reactions(self, reaction_list:object):
@@ -292,7 +298,7 @@ class UDL:
     `inverted(bool) = True`: UDL facing downwards on beam,
                                 use `inverted=False` for upside udl
     `self.netload(float)`: total effective load of udl
-    `self.netpos(float)`: position of effective load from beam origin
+    `self.pos(float)`: position of effective load from beam origin
     """
     def __init__(self, start:float, loadpm:float, span:float, inverted:bool=True, **kwargs):
         self.start = start #x coordinate of left edge of udl
@@ -305,9 +311,30 @@ class UDL:
             self.loadpm = loadpm
         
         self.netload = self.loadpm * self.span #netload of udl
-        self.netpos = self.start + self.span/2 #position of effective load of udl
+        self.pos = self.start + self.span/2 #position of effective load of udl
 
 class UVL:
+    """
+    ## Description
+    It is that load whose magnitude varies along the loading length with a constant rate. 
+    Uniformly varying load is further divided into two types;
+        1. Triangular Load
+        2. Trapezoidal Load
+
+    ### Arguments
+    1. `start:float` = Start position of uvl from beam's origin along x-axis of beam coordinate system
+    2. `startload:float` = `unit: kN/m` = Starting load/m value of uvl
+    3. `span:float` = Total length of uvl object
+    4. `endload:float` = Ending load/m value of uvl object
+    5. `inverted:bool= True` : Default=`True` Inverts the uvl object
+
+    ### Attributes
+    - `self.end` = End coordinate of uvl object
+    - `self.tload` = Net load value of upper triangular part of trapezoidal or triangular load
+    - `self.rload` = Net load value of lower rectangular part of trapezoidal load itself
+    - `self.netload` = Net load of whole uvl object itself. `netload = tload + rload`
+    - `self.netpos` = Net position(coordinates) where net load of uvl acts
+    """
     def __init__(self, start:float, startload:float, span:float, endload:float, inverted:bool=True, **kwargs):
         self.start = start
         self.span = span
@@ -327,9 +354,9 @@ class UVL:
         self.netload = self.span*(self.startload + self.endload)/2  #net load
         
         if abs(self.endload) > abs(self.startload):
-            self.netpos = self.start + (2*self.tload*self.span/3 + self.rload*self.span/2)/abs(self.netload)
+            self.pos = self.start + (2*self.tload*self.span/3 + self.rload*self.span/2)/abs(self.netload)
         else:
-            self.netpos = self.start + (self.tload*self.span/3 + self.rload*self.span/2)/abs(self.netload)
+            self.pos = self.start + (self.tload*self.span/3 + self.rload*self.span/2)/abs(self.netload)
 
 class Reaction:
     """
@@ -384,10 +411,21 @@ class PointMoment():
             self.mom = -1*mom
 
 class Hinge:
+    """
+    ## Description
+    (Hinge) Internal hinges are provided in a structure to reduce statical indeterminacy of the structure. 
+    Bending moment at internal hinge is always zero. 
+    Internal hinge makes structure more flexible. 
+    It allows structure to move which reduces the reactive stresses.
 
-    def __init__(self, pos, side='l'):
+    ### Attributes
+    1. `pos:float` = Position of that internal hinge from origin of beam coordinate system
+    2. `side:str = 'l'` : Accepted Values = `('r', 'right', 'l', 'left')`, Default Value = `'l'`
+        - This side specifies which side of loads to take in order to take moment of that loads about hinge.
+    """
+    def __init__(self, pos:float, side:str='l'):
         self.pos = pos
         if side.lower() in ('r', 'right', 'l', 'left'):
             self.side = side.lower()
         else:
-            raise NameError(f"Unknown side {side}\n Use 'l' for left and 'r' for right")
+            raise NameError(f"Unknown side attribute '{side}'\n Use 'l' for left and 'r' for right")
