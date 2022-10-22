@@ -3,6 +3,7 @@ from inspect import Attribute
 from logging import raiseExceptions
 import math
 import re
+from turtle import left
 from typing import Iterable
 import sympy as sp
 import numpy as np
@@ -57,7 +58,8 @@ class Beam:
         #intitial fx,fy,moment
         self.fx = 0 #sp.symbols('fx') #total sum of horizontal force
         self.fy = 0 #sp.symbols('fy') #total sum of vertical force
-        self.m = 0 #sp.symbols('m') #total sum of moments
+        self.m = 0 #sp.symbols('m') #total sum of moments about any point on beam
+        self.m_hinge = 0 #total sum of moments about hinge (of one side of beam only)
     
         self.solved_rxns = None #initialize variable to store solved values for reactions
         self.mom_fn = 0 #initialize variable to store bending moment values in numpy array
@@ -80,15 +82,18 @@ class Beam:
                 self.fx += loadtype.load_x
                 self.fy += loadtype.load_y
             
-            if isinstance(loadtype, Reaction):
+            elif isinstance(loadtype, Reaction):
                 if hasattr(loadtype, 'rx_var'):
                     self.fx += loadtype.rx_var
                     self.fy += loadtype.ry_var
                 else:
                     self.fy += loadtype.ry_var
 
-            if isinstance(loadtype, UDL):
+            elif isinstance(loadtype, UDL):
                 self.fy += loadtype.netload #adds net load value of udl object
+            
+            elif isinstance(loadtype, UVL):
+                self.fy += loadtype.netload
 
     def add_moments(self, momgen_list:object, about:float=0):
         """
@@ -107,14 +112,42 @@ class Beam:
         for mom_gen in momgen_list:  #takes moment about origin and adds up
             if isinstance(mom_gen, PointLoad):
                 self.m += (mom_gen.pos-about)*mom_gen.load_y
+            elif isinstance(mom_gen, UDL):
+                self.m += (mom_gen.netpos-about)*mom_gen.netload
+            elif isinstance(mom_gen, UVL):
+                self.m += (mom_gen.netpos-about)*mom_gen.netload
             elif isinstance(mom_gen, Reaction):
                 self.m += (mom_gen.pos-about)*mom_gen.ry_var
                 if hasattr(mom_gen, 'mom_var'):
                     self.m += mom_gen.mom_var
             elif isinstance(mom_gen, PointMoment):
                 self.m += mom_gen.mom
-            elif isinstance(mom_gen, UDL):
-                self.m += (mom_gen.netpos-about)*mom_gen.netload
+            elif isinstance(mom_gen, Hinge):
+                if mom_gen.side[0] == 'l':
+                    left_loads = [mgen for mgen in momgen_list if mgen.pos<mom_gen.pos & ~isinstance(mgen, Hinge)]
+                    for left_mom_gen  in left_loads:
+                        if isinstance(left_mom_gen, PointLoad):
+                            self.m_hinge += (left_mom_gen.pos-mom_gen.pos)*left_mom_gen.load_y
+                        elif isinstance(left_mom_gen, Reaction):
+                            self.m_hinge += (left_mom_gen.pos-mom_gen.pos)*left_mom_gen.ry_var
+                            if hasattr(left_mom_gen, 'mom_var'):
+                                self.m_hinge += left_mom_gen.mom_var
+                        elif isinstance(left_mom_gen, UDL):
+                            if left_mom_gen.end > mom_gen.pos:
+                                cut_udl = UDL(left_mom_gen.start, left_mom_gen.loadpm, mom_gen.pos-left_mom_gen.end)
+                                self.m_hinge += cut_udl.netload * (cut_udl.netpos-mom_gen.pos)
+                            else:
+                                self.m_hinge += left_mom_gen.netload * (left_mom_gen.netpos-mom_gen.pos)
+                        #elif isinstance(left_mom_gen, UVL):
+                        #self.m_hinge += (left_mom_gen.netpos-about)*left_mom_gen.netload
+                        elif isinstance(left_mom_gen, Reaction):
+                            self.m_hinge += (left_mom_gen.pos-about)*left_mom_gen.ry_var
+                            if hasattr(left_mom_gen, 'mom_var'):
+                                self.m_hinge += left_mom_gen.mom_var
+                        
+
+
+
 
     def calculate_reactions(self, reaction_list:object):
         """
@@ -129,6 +162,7 @@ class Beam:
         Fx_eq = sp.Eq(self.fx,0)
         Fy_eq = sp.Eq(self.fy,0)
         M_eq = sp.Eq(self.m, 0)
+        M_hinge = sp.Eq(self.m_hinge, 0)
 
         eval_values = [] #initialize an empty list to contain reactions variables to be solved
         possible_rxn = ['rx_var', 'ry_var', 'mom_var']
@@ -138,8 +172,9 @@ class Beam:
                 if hasattr(rxn_obj, rxn_var):
                     eval_values.append(getattr(rxn_obj, rxn_var))
         print(eval_values)
-        self.solved_rxns = sp.solve([Fx_eq, Fy_eq, M_eq], eval_values)
-
+        print([Fx_eq, Fy_eq, M_eq, M_hinge])
+        self.solved_rxns = sp.solve([Fx_eq, Fy_eq, M_eq, M_hinge], eval_values)
+        print(self.solved_rxns)
         #now assign values to the reaction objects too:
         for rxn_obj in reaction_list:
             for (rxn_val,rxn_var) in zip(possible_values, possible_rxn):
@@ -347,3 +382,12 @@ class PointMoment():
             self.mom = mom
         else:
             self.mom = -1*mom
+
+class Hinge:
+
+    def __init__(self, pos, side='l'):
+        self.pos = pos
+        if side.lower() in ('r', 'right', 'l', 'left'):
+            self.side = side.lower()
+        else:
+            raise NameError(f"Unknown side {side}\n Use 'l' for left and 'r' for right")
