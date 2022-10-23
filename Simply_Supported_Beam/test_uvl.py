@@ -1,9 +1,11 @@
 from beam import *
 
 b = Beam(10)
-uvl = UVL(2,0, b.length-2,1000)
+uvl = UVL(0,0, b.length,10)
 ra = Reaction(0,'f', 'A')
-
+print(uvl.netload)
+print(uvl.netload*uvl.pos)
+print(uvl.gradient)
 b.add_loads((uvl, ra))
 b.add_moments((uvl, ra))
 b.calculate_reactions((ra,))

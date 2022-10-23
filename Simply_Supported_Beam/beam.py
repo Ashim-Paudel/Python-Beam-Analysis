@@ -260,12 +260,32 @@ class Beam:
                 if force_gen.end < self.length:  # add udl in opposite direction
                     self.shear_fn -= force_gen.loadpm * \
                         sp.SingularityFunction('x', force_gen.end, 1)
+
             elif isinstance(force_gen, UVL):
-                self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
+                if abs(force_gen.startload) < abs(force_gen.endload):
+                    if force_gen.inverted:
+                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
+                    elif not force_gen.inverted:
+                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
+                    if force_gen.end < self.length: #add uvl in opposite direction
+                        if force_gen.inverted:
+                            self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
+                        if not force_gen.inverted:
+                            self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
+                
+                elif abs(force_gen.startload) > abs(force_gen.endload):
+                    if force_gen.inverted:
+                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
+                    if not force_gen.inverted:
+                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
 
-                if force_gen.end < self.length: #add uvl in opposite direction
-                    self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
-
+                    if force_gen.end < self.length: #add uvl in opposite direction
+                        if force_gen.inverted:
+                            self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
+                        if not force_gen.inverted:
+                            self.shear_fn -= ( force_gen.startload * sp.SingularityFunction('x', force_gen.end, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )                 
+                
+        print(self.shear_fn)
         self.shear_fn = sp.lambdify(self.x, self.shear_fn, 'sympy')
         self.shear_fn = np.vectorize(self.shear_fn)
 
@@ -376,6 +396,7 @@ class UVL:
         self.span = span
         self.end = span+start
         self.inverted = inverted
+
         if self.inverted:
             self.startload = -1*startload
             self.endload = -1*endload
@@ -385,7 +406,9 @@ class UVL:
 
         #gradient of uvl:
         self.gradient = (endload-startload)/span
-        
+        if startload>endload:
+            self.zero_load = startload / abs(self.gradient)
+
         # for upper triangular part: 1/2*b*h
         self.tload = self.span*abs(self.endload-self.startload)/2
         # for lowe rectangular part: b*h

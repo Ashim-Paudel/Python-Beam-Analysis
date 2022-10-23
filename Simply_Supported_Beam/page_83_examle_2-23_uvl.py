@@ -1,8 +1,8 @@
 from beam import *
 
 b = Beam(6)
-uvl1 = UVL(0,3,3,0)
-uvl2=UVL(3,0,3,3, inverted=False)
+uvl1 = UVL(0,3,3,0, inverted=True)
+uvl2=UVL(3,0,6,3, inverted=False)
 ra = Reaction(0,'h', 'A')
 rb = Reaction(b.length, 'r','B')
 
