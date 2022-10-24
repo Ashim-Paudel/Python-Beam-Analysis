@@ -437,7 +437,7 @@ class Reaction:
     `rx_var, ry_var, mom_var`: symbolic variable to store symbolic values for reactions
     """
 
-    def __init__(self, pos, type: str, pos_sym):
+    def __init__(self, pos: float, type: str, pos_sym: str):
         self.pos = pos
         # possible reaction values(initialize them as zeros):
         self.rx_val = 0
@@ -472,7 +472,7 @@ class PointMoment:
 
     """
 
-    def __init__(self, pos, mom, ccw=True):
+    def __init__(self, pos: float, mom: float, ccw: bool = True):
         self.pos = pos
         self.ccw = ccw
         if self.ccw:
