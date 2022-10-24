@@ -39,6 +39,12 @@ class Beam:
         `kwargs`: Here are few optional keyword arguments
         - `E(float)` = Modulus of Elasticity of beam material 
         - `I(float)` = 2nd moment of area of the cross section of beam
+    
+        #### Example
+        ```
+        # to create a beam of length 5m:
+        b = Beam(5)
+        ```
     """
     # initial kwargs lists for simply supported beam
     simply_supported = ('Elasticity', 'MOA')
@@ -430,12 +436,15 @@ class Reaction:
         Reactions are given by supports. 3 types of supports are defined for now
         `hinge`, `roller` and `fixed` support.
 
+   ### Arguments
+    - `pos(float)`: position of reaction
+    - `type(str)`: any one of `('roller'`,`'hinge'`,`'fixed')` or `('r'`,`'h'`,`'f')` Representing support condition at that point.
+    - `pos_sym(str)`: Symbolic variable to represent support location name 
+
     ### Attributes
-    `pos(float)`: position of reaction
-    `type(string)`: `'roller'`,`'hinge'`,`'fixed'` or `'r'`,`'h'`,`'f'`
-    `rx_val, ry_val, mom_val`: variables to store numerical values for reaction loads and moments
-    `rx_var, ry_var, mom_var`: symbolic variable to store symbolic values for reactions
-    """
+    - `rx_val, ry_val, mom_val`: variables to store numerical values for reaction loads and moments
+    - `rx_var, ry_var, mom_var`: symbolic variables to store symbolic values for reactions
+"""
 
     def __init__(self, pos: float, type: str, pos_sym: str):
         self.pos = pos
