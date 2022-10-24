@@ -1,14 +1,47 @@
-# Beam
+# Contents:
+- [Introduction](#introduction)
+    - [About Module](#about-the-module)
+    - [Program Motivation](#program-motivation)
+- [Installation](#installation)
+- [Documentation](#documentation)
+    - [Table of all classes and arguments](#list-of-all-classes-and-arguments)
+    - [Beam](#beam)
+    - [Load](#load)
+    - [Point Load](#pointload)
+    - [Uniformly Distributed Load(UDL)](#udl)
+    - [Uniformly Varying Load(UVL)](#uvl)
+    - [Reaction](#reaction)
+    - [Point Moment](#pointmoment)
+    - [Hinge](#hinge)
+- [Examples](#examples)
+
+
+# Introduction
 A beam is a structural element that primarily resists loads applied laterally to the beam's axis (an element designed to carry primarily axial load would be a strut or column). Its mode of deflection is primarily by bending. The loads applied to the beam result in reaction forces at the beam's support points. The total effect of all the forces acting on the beam is to produce shear forces and bending moments within the beams, that in turn induce internal stresses, strains and deflections of the beam.
 *Source: [Wikipedia](https://en.wikipedia.org/wiki/Beam_(structure))*
 
+### About the module
+- **Module Version: 0.0.1**
 
+This module is aimed to solve Statically Determinate, Geometrically Stable two dimensional Beam just by using 3 equations of static equilibrium.
+$F_x = 0, F_y = 0 \text{ and } M_{point} = 0$.
+
+This version of module supports:
+- determinate 2D beam with Point Loads, Uniformly Distributed Loads, Uniformly Varying Loads, Point Moments
+- Fixed or Hinged or Roller types of support conditions
+- A Beam with Internal Hinge
+- Bending Moment Diagram and Shear Force Diagram
+
+### Program Motivation
+> I studied about Beams first time in my second semester which had an included course of *Applied Mechanics - I (Statics)*. About 10-15 marks question were sure from beams and frames in board examination. But, while practicing beam analysis questions, from past question collection, one thing that collection was lacking was solution to those questions. Not even reaction values were given. So, it would cost us 15 minutes for even simple reaction calculation error. So, I thought of making this library from that period. And, I turned this thought into action in my 3rd semester's vacation.
+
+# Installation
+*TO be updated after completing uvl and graph portion and uploading to pypi*
 
 # Documentation
 Version:  0.0.1
 
-## Classes and their arguments:
-
+### List of all classes and arguments
 | class | required arguments | optional arguments |
 | -- | -- | -- |
 | `Beam` | `length: float` | `E: float, I:float` |
@@ -20,8 +53,6 @@ Version:  0.0.1
 | `PointMoment` | `pos: float, mom: float` | `ccw: bool = True` |
 | `Hinge` | `pos: float` | `side: str = 'l'` |
 
-
----
 
 # Beam:
  `Beam` is the main class to represent a beam object and perform various calculations.
@@ -133,3 +164,6 @@ It allows structure to move which reduces the reactive stresses.
     - Default Value = `'l'`
     - This side specifies which side of loads to take in order to take moment of that loads about hinge.
 
+
+# Examples
+## example-1: Solving Simply Supported Beam
