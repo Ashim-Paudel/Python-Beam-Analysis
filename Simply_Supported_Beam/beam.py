@@ -1,12 +1,13 @@
 # Phase-1: A simple OOP based program for simple beam solving:
+import math
+import os
+import __main__
 from inspect import Attribute
 from logging import raiseExceptions
-import math
 from typing import Iterable
-import sympy as sp
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
+import sympy as sp
 
 """
 # About Beam library:
@@ -48,6 +49,8 @@ class Beam:
     """
     # initial kwargs lists for simply supported beam
     simply_supported = ('Elasticity', 'MOA')
+    # fonts specification for graphs
+    plt.rc('font', family='serif', size=14)
 
     def __init__(self, length: float, **kwargs):
         self.length = length
@@ -295,6 +298,90 @@ class Beam:
         self.shear_fn = sp.lambdify(self.x, self.shear_fn, 'sympy')
         self.shear_fn = np.vectorize(self.shear_fn)
 
+    def generate_graph(self, which='both', **kwargs):
+        """
+        To generate bending moment diagram for beam with all reactions solved
+        # Arguments:
+        - `which:str ='both'` = To specify which graph to show
+            - Accepted values `('bmd', 'sfd', 'both')`
+        ### Optional Arguments:
+        - `save_fig:bool` = To specify whether or not to save the generated image locally
+        - `save_path:str` = Relative or absolute of path to save the generate image
+            - `save_fig` and `save_path` must be used together
+        """        
+        diagrams = ('bmd', 'sfd', 'both')
+        if which.lower() in diagrams:
+            pass
+        else:
+            raise ValueError(f"Unexpected graph type {which}")
+        
+        x = np.linspace(-1, self.length, 1000)
+        if which == 'bmd':
+            moments = self.mom_fn(x)
+            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram")
+            ax.plot(x, moments, color='orange', label="BMD")
+            ax.set_xticks(range(0, self.length+1,1))
+            ax.set_xlim(-0.5, self.length+0.5)
+            ax.axhline(y=0, linewidth=3, color='k', label='Beam')
+            ax.set_title("Bending Moment Diagram")
+            ax.set_xlabel("x (m)")
+            ax.set_ylabel("Bending Moment (kNm)")
+            ax.legend(fontsize=8)
+            ax.grid()
+            if kwargs.get('savefig') == True:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    try:
+                        os.mkdir("images")
+                    except FileExistsError:
+                        pass
+                    save_path = f"images/{__main__.__file__.split('/')[-1][:-3]}.png"
+                fig.savefig(fname = save_path)
+            plt.show()
+        
+        if which == 'sfd':
+            shear_values = self.shear_fn(x)
+            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram")
+            ax.plot(x, shear_values, color='orange', label="SFD")
+            ax.set_xticks(range(0, self.length+1,1))
+            ax.set_xlim(-0.5, self.length+0.5)
+            ax.axhline(y=0,linewidth=3, color='k', label='Beam')
+            ax.set_title("Shear Force Diagram")
+            ax.set_xlabel("x (m)")
+            ax.set_ylabel("Shear Force (kN)")
+            ax.legend(fontsize=8)
+            ax.grid()
+            if kwargs.get('savefig') == True:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    try:
+                        os.mkdir("images")
+                    except FileExistsError:
+                        pass
+                    save_path = f"images/{__main__.__file__.split('/')[-1][:-3]}.png"
+                fig.savefig(fname = save_path)
+            plt.show()
+                  
+        if which == 'both':
+            shear_values = self.shear_fn(x)
+            moments = self.mom_fn(x)
+
+            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(8,8), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD")
+            axs[0].plot(x,shear_values,color='orange')
+            axs[0].set_title("SFD")
+            axs[0].set_ylabel("Shear Force (kN)")
+            axs[1].plot(x, moments,color='green')
+            axs[1].set_xticks(range(0, self.length+1,1))
+            axs[1].set_title("BMD")
+            axs[1].set_xlabel("x (m)")
+            axs[1].set_ylabel("Bending Moment (kNm)")
+            fig.suptitle("Comparison of BMD and SFD")
+            for ax in axs:
+                
+                ax.set_xlim(-0.5, self.length+0.5)
+                ax.axhline(y=0, linewidth=3, color='k')
+                ax.grid()
+            plt.show()
 
 class Load:
     '''
