@@ -241,6 +241,17 @@ class Beam:
                     self.mom_fn -= mom_gen.loadpm * \
                         sp.SingularityFunction('x', mom_gen.end, 2)/2
 
+            elif isinstance(mom_gen, UVL):
+                if abs(mom_gen.startload) < abs(mom_gen.endload):
+                    self.mom_fn += mom_gen.startload * sp.SingularityFunction('x', mom_gen.start, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.start, 3)/6
+                    if mom_gen.end < self.length: #add uvl in opposite direction
+                        self.mom_fn -= mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/6
+
+                elif abs(mom_gen.startload) > abs(mom_gen.endload):
+                    self.mom_fn += mom_gen.startload * sp.SingularityFunction('x', mom_gen.start, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.start, 3)/6
+                    if mom_gen.end < self.length: #add uvl in opposite direction
+                        self.mom_fn = mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/6
+
         # in order to lambdify moment_equation and vectorize it:
         self.mom_fn = sp.lambdify(self.x, self.mom_fn, 'sympy')
         self.mom_fn = np.vectorize(self.mom_fn)
@@ -271,34 +282,15 @@ class Beam:
                         sp.SingularityFunction('x', force_gen.end, 1)
 
             elif isinstance(force_gen, UVL):
-                if abs(force_gen.startload) < abs(force_gen.endload):
-                    if force_gen.inverted:
-                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
-                    elif not force_gen.inverted:
-                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
-                    if force_gen.end < self.length: #add uvl in opposite direction
-                        if force_gen.inverted:
-                            self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
-                        if not force_gen.inverted:
-                            self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
-                
-                elif abs(force_gen.startload) > abs(force_gen.endload):
-                    if force_gen.inverted:
-                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
-                    if not force_gen.inverted:
-                        self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
+                self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
+                if force_gen.end < self.length: #add uvl in opposite direction
+                    self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
 
-                    if force_gen.end < self.length: #add uvl in opposite direction
-                        if force_gen.inverted:
-                            self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) - force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
-                        if not force_gen.inverted:
-                            self.shear_fn -= ( force_gen.startload * sp.SingularityFunction('x', force_gen.end, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )                 
-                
         print(self.shear_fn)
         self.shear_fn = sp.lambdify(self.x, self.shear_fn, 'sympy')
         self.shear_fn = np.vectorize(self.shear_fn)
 
-    def generate_graph(self, which='both', **kwargs):
+    def generate_graph(self, which='both', save_fig=False, **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:
@@ -328,15 +320,18 @@ class Beam:
             ax.set_ylabel("Bending Moment (kNm)")
             ax.legend(fontsize=8)
             ax.grid()
-            if kwargs.get('savefig') == True:
-                save_path = kwargs.get('save_path')
-                if save_path == None:
-                    try:
-                        os.mkdir("images")
-                    except FileExistsError:
-                        pass
-                    save_path = f"images/{__main__.__file__.split('/')[-1][:-3]}.png"
-                fig.savefig(fname = save_path)
+            #if save_fig:
+            #    save_path = kwargs.get('save_path')
+            #    if save_path == None:
+            #        main_file_name = __main__.__file__.split('/')[-1]
+            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
+            #        print(store_dir)
+            #        try:
+            #            os.mkdir(store_dir)
+            #        except FileExistsError:
+            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+            #        else:
+            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
             plt.show()
         
         if which == 'sfd':
@@ -351,15 +346,18 @@ class Beam:
             ax.set_ylabel("Shear Force (kN)")
             ax.legend(fontsize=8)
             ax.grid()
-            if kwargs.get('savefig') == True:
-                save_path = kwargs.get('save_path')
-                if save_path == None:
-                    try:
-                        os.mkdir("images")
-                    except FileExistsError:
-                        pass
-                    save_path = f"images/{__main__.__file__.split('/')[-1][:-3]}.png"
-                fig.savefig(fname = save_path)
+            #if save_fig:
+            #    save_path = kwargs.get('save_path')
+            #    if save_path == None:
+            #        main_file_name = __main__.__file__.split('/')[-1]
+            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
+            #        print(store_dir)
+            #        try:
+            #            os.mkdir(store_dir)
+            #        except FileExistsError:
+            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+            #        else:
+            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
             plt.show()
                   
         if which == 'both':
@@ -377,10 +375,21 @@ class Beam:
             axs[1].set_ylabel("Bending Moment (kNm)")
             fig.suptitle("Comparison of BMD and SFD")
             for ax in axs:
-                
                 ax.set_xlim(-0.5, self.length+0.5)
                 ax.axhline(y=0, linewidth=3, color='k')
                 ax.grid()
+            #if save_fig:
+            #    save_path = kwargs.get('save_path')
+            #    if save_path == None:
+            #        main_file_name = __main__.__file__.split('/')[-1]
+            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
+            #        print(store_dir)
+            #        try:
+            #            os.mkdir(store_dir)
+            #        except FileExistsError:
+            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+            #        else:
+            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
             plt.show()
 
 class Load:
@@ -498,7 +507,7 @@ class UVL:
             self.endload = endload
 
         #gradient of uvl:
-        self.gradient = (endload-startload)/span
+        self.gradient = (self.endload-self.startload)/span
         if startload>endload:
             self.zero_load = startload / abs(self.gradient)
 
