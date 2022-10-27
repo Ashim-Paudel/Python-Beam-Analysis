@@ -245,12 +245,12 @@ class Beam:
                 if abs(mom_gen.startload) < abs(mom_gen.endload):
                     self.mom_fn += mom_gen.startload * sp.SingularityFunction('x', mom_gen.start, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.start, 3)/6
                     if mom_gen.end < self.length: #add uvl in opposite direction
-                        self.mom_fn -= mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/6
+                        self.mom_fn -= ( mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/6)
 
                 elif abs(mom_gen.startload) > abs(mom_gen.endload):
-                    self.mom_fn += mom_gen.startload * sp.SingularityFunction('x', mom_gen.start, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.start, 3)/6
+                    self.mom_fn += mom_gen.startload * sp.SingularityFunction('x', mom_gen.start, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.start, 3)/3
                     if mom_gen.end < self.length: #add uvl in opposite direction
-                        self.mom_fn = mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/6
+                        self.mom_fn -= (mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/3)
 
         # in order to lambdify moment_equation and vectorize it:
         self.mom_fn = sp.lambdify(self.x, self.mom_fn, 'sympy')
