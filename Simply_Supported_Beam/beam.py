@@ -249,7 +249,7 @@ class Beam:
         # in order to lambdify moment_equation and vectorize it:
         self.mom_fn = sp.lambdify(self.x, self.mom_fn, 'sympy')
         self.mom_fn = np.vectorize(self.mom_fn)
-
+ 
     def generate_shear_equation(self, loads):
         """
         ### Description
