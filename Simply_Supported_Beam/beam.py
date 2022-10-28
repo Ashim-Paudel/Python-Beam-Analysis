@@ -133,48 +133,63 @@ class Beam:
             elif isinstance(mom_gen, PointMoment):
                 self.m += mom_gen.mom
 
-            # for internal hinge
-            elif isinstance(mom_gen, Hinge):
-                # dictionary of load separated to left and right of hinge
-                separate_load = {
-                    'l': [mgen for mgen in momgen_list if mgen.pos < mom_gen.pos],
-                    # 'l' = moment generators to left of hinge
-                    'r': [mgen for mgen in momgen_list if mgen.pos > mom_gen.pos]
-                    # 'r' =  moment generators to right of hinge
-                }
-                                
-                # now take loads according to side specified in hinge class
-                for side_mom_gen in separate_load[mom_gen.side[0]]:
-                    if isinstance(side_mom_gen, PointLoad):
-                        self.m_hinge += (side_mom_gen.pos -
-                                         mom_gen.pos)*side_mom_gen.load_y
-                    elif isinstance(side_mom_gen, Reaction):
-                        self.m_hinge += (side_mom_gen.pos -
-                                         mom_gen.pos)*side_mom_gen.ry_var
-                        if hasattr(side_mom_gen, 'mom_var'):
-                            self.m_hinge += side_mom_gen.mom_var
-                    elif isinstance(side_mom_gen, PointMoment):
-                        self.m_hinge += side_mom_gen.mom
-                    elif isinstance(side_mom_gen, UDL):
-                        if side_mom_gen.end > mom_gen.pos & side_mom_gen.start<mom_gen.pos:
-                            # cut and take left portion of udl
-                            if mom_gen.side[0]=='l':
-                                cut_udl = UDL(side_mom_gen.start, side_mom_gen.loadpm, mom_gen.pos-side_mom_gen.end)
-                            else:
-                                cut_udl = UDL(mom_gen.pos, side_mom_gen.loadpm, side_mom_gen.end-mom_gen.pos)
+    def add_hinge(self, hinge, mom_gens):
+        if not isinstance(hinge, Hinge):
+            raise ValueError(f"{hinge.__class__.__name__} object cannot be treated as Hinge object")
+        
+        # dictionary of loads separated to left and right of hinge
+        separate_load = {
+            'l': [mgen for mgen in mom_gens if mgen.pos < hinge.pos],
+            # 'l' = moment generators to left of hinge
+            'r': [mgen for mgen in mom_gens if mgen.pos > hinge.pos]
+            # 'r' =  moment generators to right of hinge
+        }
 
-                            self.m_hinge += cut_udl.netload * \
-                                (cut_udl.pos-mom_gen.pos)
-                        else:
-                            self.m_hinge += side_mom_gen.netload * \
-                                (side_mom_gen.pos-mom_gen.pos)
-                    # elif isinstance(left_mom_gen, UVL):
-                    #self.m_hinge += (left_mom_gen.netpos-about)*left_mom_gen.netload
-                    elif isinstance(side_mom_gen, Reaction):
-                        self.m_hinge += (side_mom_gen.pos -
-                                         about)*side_mom_gen.ry_var
-                        if hasattr(side_mom_gen, 'mom_var'):
-                            self.m_hinge += side_mom_gen.mom_var
+        # now take loads according to side specified in hinge class
+        for side_mom_gen in separate_load[hinge.side[0]]:
+            if isinstance(side_mom_gen, PointLoad):
+                self.m_hinge += (side_mom_gen.pos -
+                                    hinge.pos)*side_mom_gen.load_y
+            elif isinstance(side_mom_gen, Reaction):
+                self.m_hinge += (side_mom_gen.pos -
+                                    hinge.pos)*side_mom_gen.ry_var
+                if hasattr(side_mom_gen, 'mom_var'):
+                    self.m_hinge += side_mom_gen.mom_var
+            elif isinstance(side_mom_gen, PointMoment):
+                self.m_hinge += side_mom_gen.mom
+            elif isinstance(side_mom_gen, UDL):
+                if side_mom_gen.end > hinge.pos & side_mom_gen.start<hinge.pos:
+                    # cut and take left portion of udl
+                    if hinge.side[0]=='l':
+                        cut_udl = UDL(side_mom_gen.start, side_mom_gen.loadpm, hinge.pos-side_mom_gen.end)
+                    else:
+                        cut_udl = UDL(hinge.pos, side_mom_gen.loadpm, side_mom_gen.end-hinge.pos)
+
+                    self.m_hinge += cut_udl.netload * \
+                        (cut_udl.pos-hinge.pos)
+                else:
+                    self.m_hinge += side_mom_gen.netload * \
+                        (side_mom_gen.pos-hinge.pos)
+
+            elif isinstance(side_mom_gen, UVL):
+                #to find the exact load/m value at position where hinge is:
+                if side_mom_gen.start < hinge.pos & side_mom_gen.end > hinge.pos:
+                    w_x = abs(side_mom_gen.startload + side_mom_gen.gradient*(hinge.pos-side_mom_gen.start))
+                    if hinge.side[0] == 'l':
+                        cut_uvl = UVL(side_mom_gen.start, abs(side_mom_gen.startload), hinge.pos-side_mom_gen.start, w_x)
+                    else:
+                        cut_uvl = UVL(hinge.pos, w_x,side_mom_gen.end-hinge.pos, abs(side_mom_gen.endload))
+                    
+                    self.m_hinge += cut_uvl.netload * (cut_uvl.pos-hinge.pos)
+                else:
+                    self.m_hinge += side_mom_gen.netload * \
+                        (side_mom_gen.pos-hinge.pos)         
+
+            elif isinstance(side_mom_gen, Reaction):
+                self.m_hinge += (side_mom_gen.pos -
+                                    hinge.pos)*side_mom_gen.ry_var
+                if hasattr(side_mom_gen, 'mom_var'):
+                    self.m_hinge += side_mom_gen.mom_var
 
     def calculate_reactions(self, reaction_list: object):
         """
@@ -283,6 +298,21 @@ class Beam:
         print(self.shear_fn)
         self.shear_fn = sp.lambdify(self.x, self.shear_fn, 'sympy')
         self.shear_fn = np.vectorize(self.shear_fn)
+
+    def fast_solve(self, loads_list):
+        hin = None
+        rxns = [rxn for rxn in loads_list if isinstance(rxn, Reaction)]
+        for obj in loads_list:
+            if isinstance(obj, Hinge):
+                hin = obj
+
+        self.add_loads(load_list=loads_list)
+        self.add_moments(loads_list)
+        if hin:
+            self.add_hinge(hin, loads_list)
+        self.calculate_reactions(rxns)
+        self.generate_shear_equation(loads_list)
+        self.generate_moment_equation(loads_list)
 
     def generate_graph(self, which='both', save_fig=False, **kwargs):
         """
