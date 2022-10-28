@@ -37,7 +37,16 @@ This version of module supports:
 > I studied about Beams first time in my second semester which had an included course of *Applied Mechanics - I (Statics)*. About 10-15 marks question were sure from beams and frames in board examination. But, while practicing beam analysis questions, from past question collection, one thing that collection was lacking was solution to those questions. Not even reaction values were given. So, it would cost us 15 minutes for even simple reaction calculation error. So, I thought of making this library from that period. And, I turned this thought into action in my 3rd semester's vacation.
 
 # Installation
-*TO be updated after completing uvl and graph portion and uploading to pypi*
+```
+pip install pibeam
+```
+**Requirements**
+```
+"numpy>=1.19"
+"sympy>=1",
+"matplotlib>=3"
+```
+- [PyPi link](https://pypi.org/project/pibeam/0.0.1/)
 
 # Documentation
 Version:  0.0.1

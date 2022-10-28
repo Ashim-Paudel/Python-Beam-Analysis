@@ -16,18 +16,15 @@ setup(
     author_email="paudelashim111@gmail.com",  
     classifiers=[ 
         "Development Status :: 3 - Alpha",
-        "Intended Audience :: Engineering Students",
-        "Topic :: Applied Mechanics :: Beams",
+        "Topic :: Scientific/Engineering :: Visualization",
+        "Topic :: Scientific/Engineering :: Physics",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
     ],
     keywords="beams, frames, structure, civil engineering, structural engineering, applied mechanics", 
     package_dir={"": "src"}, 
     packages=find_packages(where="src"), 
-    python_requires=">=3.5, <4",
-    install_requires=["numpy>=1"
+    python_requires=">=3.4, <4",
+    install_requires=["numpy>=1.19"
     "sympy>=1",
     "matplotlib>=3"
     ],  
