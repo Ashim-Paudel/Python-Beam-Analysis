@@ -1,4 +1,3 @@
-# Phase-1: A simple OOP based program for simple beam solving:
 import math
 import os
 import __main__
@@ -134,6 +133,19 @@ class Beam:
                 self.m += mom_gen.mom
 
     def add_hinge(self, hinge, mom_gens):
+        """
+        ### Description:
+        Internal hinges are provided in beam to make structure more flexible and able to resist external moments.
+        It allows structure to move which reduces the reactive stresses. While, it's contribution in our program is
+        that it will provide an extra equation for the beam.
+
+        This function will modify `self.m_hinge` property of beam.
+        Calling this funciton will calculate and add all moments hinge of all the loads to specified side (represented in `hinge.side`)
+
+        ### Arguments:
+        - `hinge` = object instance of `Hinge` class.
+        - `mom_gens` = list of moment generators present on the beam.
+        """
         if not isinstance(hinge, Hinge):
             raise ValueError(f"{hinge.__class__.__name__} object cannot be treated as Hinge object")
         
@@ -300,6 +312,13 @@ class Beam:
         self.shear_fn = np.vectorize(self.shear_fn)
 
     def fast_solve(self, loads_list):
+        """
+        ### Description
+        This function will:
+        1. solve for the unknown reactions
+        2. generate shear function (can be accessed by `self.shear_fn`)
+        3. generate moment function (can be accessed by `self.mom_fn`)
+        """
         hin = None
         rxns = [rxn for rxn in loads_list if isinstance(rxn, Reaction)]
         for obj in loads_list:
@@ -564,7 +583,7 @@ class Reaction:
     ### Attributes
     - `rx_val, ry_val, mom_val`: variables to store numerical values for reaction loads and moments
     - `rx_var, ry_var, mom_var`: symbolic variables to store symbolic values for reactions
-"""
+    """
 
     def __init__(self, pos: float, type: str, pos_sym: str):
         self.pos = pos
