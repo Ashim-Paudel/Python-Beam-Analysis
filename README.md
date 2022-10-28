@@ -6,6 +6,7 @@
 - [Documentation](#documentation)
     - [Table of all classes and arguments](#list-of-all-classes-and-arguments)
     - [Beam](#beam)
+        - [Methods in Beam class](#methods)
     - [Load](#load)
     - [Point Load](#pointload)
     - [Uniformly Distributed Load(UDL)](#udl)
@@ -64,6 +65,24 @@ Version:  0.0.1
 Here are few optional keyword arguments
 - `E(float)` = Modulus of Elasticity of beam material 
 - `I(float)` = 2nd moment of area of the cross section of beam
+
+### Methods
+
+|S.N | Method | Arguments | Description |
+|-- | -- | -- | -- |
+| 1. | `fast_solve`| `loads_list` | Pass list (or tuple) of all load, moment, reaction and hinge elements present in beam. $\\$ This method will: $\\$ 1. Calculate Reactions $\\$ 2. Generate Shear and Bending Moment Equation |
+|2.| `generate_graph` | `which:str = 'both'` | By default this generate will both Bending Moment Diagram(BMD) and Shear Force Diagram (SFD) stacked vertically. $\\$ To obtain seperate graphs change default value `which = 'both'` to `'sfd'` or `'bmd'` |
+|3. | `add_loads` | `load_list`| Pass list of force generating objects. This will add the net loads in x and y direction.$\\$ Possible loads are `(PointLoad, Reaction, UDL, UVL)` |
+| 4. | `add_moments` | `momgen_list` $\\$ **optional:** `about=0` | Pass in list of moment generating objects like `(PointLoad,Reaction, UDL, UVL, PointMoment)` $\\$ By default this function takes moment about origin. $\\$If you want to take moment about any other point, use Optional argument `about` and pass any x-coordinate value. |
+| 5. | `add_hinge` | `hinge, mom_gens` | This method must be used iff there is hinge object in beam. A hinge object and list(or tuple) of moment generating objects are expected arguments |
+| 6. | `calculate_reactions` | `reaction_list` | Pass in list(or tuple) of unknown reactions object to solve and assign reaction values |
+| 7. | `generate_shear_equation` | `loads` | Pass in list(or tuple) of load generators to generate shear equation |
+| 8. | `generate_moment_equation` | `loads` | Pass in list(or tuple) of load generators to generate moment equation |
+
+**Note**
+> Just first and second methods are sufficient to solve beam and generate graph. But, to keep track of ongoing process use other methods. *Remember not to use `fast_solve` and other methods(excluding method no. 2). Doing this will re-add all those loads you've passed again.*
+
+
 
 **Example**
 ```
@@ -166,4 +185,38 @@ It allows structure to move which reduces the reactive stresses.
 
 
 # Examples
-## example-1: Solving Simply Supported Beam
+### Example-1: Solving Simplest Beam
+The simplest possible code to solve simply supported beam with pointload at middle of span.
+```
+# create a beam of length 5m
+b = Beam(5)
+
+# create reaction and pointload objects
+ra = Reaction(0, 'r', 'A')
+rb = Reaction(b.length, 'h', 'B')
+p = PointLoad(b.length/2, 10, inverted=True)
+
+b.fast_solve((ra, rb, p))
+b.generate_graph()
+
+```
+**Graph:**
+![SFD and BMD of simply supported beam with pointload at mid of span](readme_images/example_1.png)
+
+### Example-2: Cantilever beam with udl
+
+```
+
+# create a beam of length 5m
+b = Beam(5)
+
+# create reaction and udl object
+ra = Reaction(0, 'f', 'A')
+udl = UDL(0, 5, 5)
+
+b.fast_solve((ra, udl))
+b.generate_graph()
+
+```
+**Graph:**
+![SFD and BMD of cantilever beam with udl](readme_images/example_2.png)
