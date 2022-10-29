@@ -1,4 +1,4 @@
-from beam import *
+from beamframe import *
 
 b = Beam(8)
 

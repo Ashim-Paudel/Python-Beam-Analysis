@@ -1,4 +1,4 @@
-from beam import *
+from beamframe import *
 
 b= Beam(18)
 ra = Reaction(0, 'f', 'A')

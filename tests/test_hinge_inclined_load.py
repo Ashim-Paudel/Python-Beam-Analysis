@@ -1,4 +1,4 @@
-from beam import *
+from beamframe import *
 
 # q:b -> https://learnaboutstructures.com/sites/default/files/images/3-Frames/Problem-4-1.png
 
