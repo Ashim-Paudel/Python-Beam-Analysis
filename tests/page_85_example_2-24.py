@@ -1,4 +1,4 @@
-from pibeam import *
+from beamframe import *
 
 b = Beam(8)
 

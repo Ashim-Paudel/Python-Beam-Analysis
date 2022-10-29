@@ -39,7 +39,7 @@ This version of module supports:
 
 # Installation
 ```
-pip install pibeam
+pip install beamframe
 ```
 **Requirements**
 ```
@@ -47,10 +47,9 @@ pip install pibeam
 "sympy>=1",
 "matplotlib>=3"
 ```
-- [PyPi link](https://pypi.org/project/pibeam/0.0.1/)
+- [PyPi link](https://pypi.org/project/beamframe/)
 
 # Documentation
-Version:  0.0.2
 
 ## Units and Conventions
 One can use and follow thier own sign conventions in this module. But, default values will have following units and sign conventions.
@@ -226,7 +225,7 @@ b.generate_graph()
 
 ```
 **Graph:**
-![SFD and BMD of simply supported beam with pointload at mid of span](https://ashimp.com.np/pybeam/images/readme_example_1.png)
+![SFD and BMD of simply supported beam with pointload at mid of span](https://ashimp.com.np/beamframe/images/readme_example_1.png)
 
 ### Example-2: Cantilever beam with udl
 
@@ -244,4 +243,4 @@ b.generate_graph()
 
 ```
 **Graph:**
-![SFD and BMD of cantilever beam with udl](https://ashimp.com.np/pybeam/images/readme_example_2.png)
+![SFD and BMD of cantilever beam with udl](https://ashimp.com.np/beamframe/images/readme_example_2.png)

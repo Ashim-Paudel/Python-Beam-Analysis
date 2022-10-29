@@ -1,4 +1,4 @@
-from pibeam import *
+from beamframe import *
 
 uvl = UVL(start=0, startload=0, span=3, endload=4) #triangular load (inverted)
 uvl2 = UVL(start=0, startload=4, span=3, endload=0)

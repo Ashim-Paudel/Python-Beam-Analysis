@@ -1,4 +1,4 @@
-from pibeam import *
+from beamframe import *
 
 b = Beam(length=10)
 p = PointLoad(b.length/2, 10, True)

@@ -1,6 +1,6 @@
 #question: https://ars.els-cdn.com/content/image/3-s2.0-B9780081025864000032-f03-22-9780081025864.jpg
 
-from pibeam import *
+from beamframe import *
 
 b = Beam(4)
 p1 = PointLoad(1,2,True)
