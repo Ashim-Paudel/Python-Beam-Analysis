@@ -1,4 +1,4 @@
-from beam import *
+from pibeam import *
 
 b = Beam(10)
 uvl = UVL(0,0, b.length,10)

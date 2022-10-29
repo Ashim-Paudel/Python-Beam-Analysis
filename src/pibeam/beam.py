@@ -1,9 +1,4 @@
-import math
-import os
 import __main__
-from inspect import Attribute
-from logging import raiseExceptions
-from typing import Iterable
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp

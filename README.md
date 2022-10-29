@@ -4,6 +4,7 @@
     - [Program Motivation](#program-motivation)
 - [Installation](#installation)
 - [Documentation](#documentation)
+    - [Units and Conventions](#units-and-conventions)
     - [Table of all classes and arguments](#list-of-all-classes-and-arguments)
     - [Beam](#beam)
         - [Methods in Beam class](#methods)
@@ -42,16 +43,31 @@ pip install pibeam
 ```
 **Requirements**
 ```
-"numpy>=1.19"
+"numpy>=1.19",
 "sympy>=1",
 "matplotlib>=3"
 ```
 - [PyPi link](https://pypi.org/project/pibeam/0.0.1/)
 
 # Documentation
-Version:  0.0.1
+Version:  0.0.2
 
-### List of all classes and arguments
+## Units and Conventions
+One can use and follow thier own sign conventions in this module. But, default values will have following units and sign conventions.
+### Sign Conventions:
+- Positive x-axis for beam: increases in right hand side.
+- Positive y-axis for beam: increases upward direction.
+- Positive angle direction: Counter clockwise with respect to positive x-axis of beam.
+- Positive moment: Counter clockwise
+
+### Standard Units:
+- Length: meter
+- Angle: degrees
+- Load: kN
+- Moment: kNm
+- Load per meter: kN/m
+
+## List of all classes and arguments
 | class | required arguments | optional arguments |
 | -- | -- | -- |
 | `Beam` | `length: float` | `E: float, I:float` |
@@ -81,8 +97,8 @@ Here are few optional keyword arguments
 |-- | -- | -- | -- |
 | 1. | `fast_solve`| `loads_list` | Pass list (or tuple) of all load, moment, reaction and hinge elements present in beam. $\\$ This method will: $\\$ 1. Calculate Reactions $\\$ 2. Generate Shear and Bending Moment Equation |
 |2.| `generate_graph` | `which:str = 'both'` | By default this generate will both Bending Moment Diagram(BMD) and Shear Force Diagram (SFD) stacked vertically. $\\$ To obtain seperate graphs change default value `which = 'both'` to `'sfd'` or `'bmd'` |
-|3. | `add_loads` | `load_list`| Pass list of force generating objects. This will add the net loads in x and y direction.$\\$ Possible loads are `(PointLoad, Reaction, UDL, UVL)` |
-| 4. | `add_moments` | `momgen_list` $\\$ **optional:** `about=0` | Pass in list of moment generating objects like `(PointLoad,Reaction, UDL, UVL, PointMoment)` $\\$ By default this function takes moment about origin. $\\$If you want to take moment about any other point, use Optional argument `about` and pass any x-coordinate value. |
+|3. | `add_loads` | `load_list`| Pass list of force generating objects. This will add the net loads in x and y direction. $\\$ Possible loads are `(PointLoad, Reaction, UDL, UVL)` |
+| 4. | `add_moments` | `momgen_list` $\\$ **optional:** `about=0` | Pass in list of moment generating objects like `(PointLoad,Reaction, UDL, UVL, PointMoment)` $\\$ By default this function takes moment about origin. $\\$ If you want to take moment about any other point, use Optional argument `about` and pass any x-coordinate value. |
 | 5. | `add_hinge` | `hinge, mom_gens` | This method must be used iff there is hinge object in beam. A hinge object and list(or tuple) of moment generating objects are expected arguments |
 | 6. | `calculate_reactions` | `reaction_list` | Pass in list(or tuple) of unknown reactions object to solve and assign reaction values |
 | 7. | `generate_shear_equation` | `loads` | Pass in list(or tuple) of load generators to generate shear equation |
@@ -210,7 +226,7 @@ b.generate_graph()
 
 ```
 **Graph:**
-![SFD and BMD of simply supported beam with pointload at mid of span](readme_images/example_1.png)
+![SFD and BMD of simply supported beam with pointload at mid of span](https://ashimp.com.np/pybeam/images/readme_example_1.png)
 
 ### Example-2: Cantilever beam with udl
 
@@ -228,4 +244,4 @@ b.generate_graph()
 
 ```
 **Graph:**
-![SFD and BMD of cantilever beam with udl](readme_images/example_2.png)
+![SFD and BMD of cantilever beam with udl](https://ashimp.com.np/pybeam/images/readme_example_2.png)

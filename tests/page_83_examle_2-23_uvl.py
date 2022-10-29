@@ -1,4 +1,4 @@
-from beam import *
+from pibeam import *
 
 b = Beam(6)
 uvl1 = UVL(0,3,3,0, inverted=True)

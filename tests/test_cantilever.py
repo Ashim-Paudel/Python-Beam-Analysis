@@ -1,7 +1,7 @@
 # question: https://civilengineeronline.com/mech/fig51a.gif
 # solution : https://civilengineeronline.com/mech/fig51bsfbm.gif
 # last question from figure
-from beam import *
+from pibeam import *
 
 b = Beam(4)
 rd = Reaction(b.length, 'f', 'D')

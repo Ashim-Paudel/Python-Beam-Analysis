@@ -1,4 +1,4 @@
-from beam import *
+from pibeam import *
 
 b = Beam(12)
 udl = UDL(4,6,4)

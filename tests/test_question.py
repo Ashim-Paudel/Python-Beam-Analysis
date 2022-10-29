@@ -1,6 +1,6 @@
 # question link: https://learnaboutstructures.com/sites/default/files/images/3-Frames/Det-Beam-Example-Moment.png
 
-from beam import *
+from pibeam import *
 b = Beam(15)
 ra = Reaction(0, 'h', 'A')
 rc = Reaction(10, 'r','C')

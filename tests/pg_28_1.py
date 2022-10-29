@@ -1,4 +1,4 @@
-from beam import *
+from pibeam import *
 # gbm book page: 28 qn 1
 # test question form SOM book by GBM
 
