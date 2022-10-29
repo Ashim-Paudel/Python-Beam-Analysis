@@ -2,7 +2,7 @@ import __main__
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
-
+import os
 """
 # About Beam library:
 A beam is a structural element that primarily resists loads applied laterally to the beam's axis.
@@ -328,7 +328,7 @@ class Beam:
         self.generate_shear_equation(loads_list)
         self.generate_moment_equation(loads_list)
 
-    def generate_graph(self, which='both', save_fig=False, **kwargs):
+    def generate_graph(self, which='both', save_fig=False, show_graph=True, **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:
@@ -338,6 +338,7 @@ class Beam:
         - `save_fig:bool` = To specify whether or not to save the generated image locally
         - `save_path:str` = Relative or absolute of path to save the generate image
             - `save_fig` and `save_path` must be used together
+        - `details: bool` = To specify whether or not to show salient features in graph
         """        
         diagrams = ('bmd', 'sfd', 'both')
         if which.lower() in diagrams:
@@ -345,11 +346,18 @@ class Beam:
         else:
             raise ValueError(f"Unexpected graph type {which}")
         
-        x = np.linspace(-1, self.length, 1000)
+        # creating numpy array to plot those values
+        x,dx = np.linspace(-1, self.length, 1000, retstep=True)
+        moment_values = self.mom_fn(x)
+        shear_values = self.shear_fn(x)
+
+        # (y,x) in matplotib graph for maximum bending moment
+        max_bm, posx_maxbm = np.max(moment_values), x[np.argmax(moment_values)]
+
+
         if which == 'bmd':
-            moments = self.mom_fn(x)
             fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram")
-            ax.plot(x, moments, color='orange', label="BMD")
+            ax.plot(x, moment_values, color='orange', label="BMD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
             ax.axhline(y=0, linewidth=3, color='k', label='Beam')
@@ -358,22 +366,31 @@ class Beam:
             ax.set_ylabel("Bending Moment (kNm)")
             ax.legend(fontsize=8)
             ax.grid()
-            #if save_fig:
-            #    save_path = kwargs.get('save_path')
-            #    if save_path == None:
-            #        main_file_name = __main__.__file__.split('/')[-1]
-            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
-            #        print(store_dir)
-            #        try:
-            #            os.mkdir(store_dir)
-            #        except FileExistsError:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            #        else:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+
+            if kwargs.get('details') == True:
+                ax.plot(posx_maxbm, max_bm, 'ko')
+                ax.text(posx_maxbm+25*dx, max_bm , s= r"$M_{max}$ ="+str(round(max_bm, 2)), fontsize='xx-small', fontweight='light')
+            
+            if save_fig:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    main_file_name = __main__.__file__.split('/')[-1]
+                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
+                    print(store_dir)
+                    try:
+                        os.mkdir(store_dir)
+                    except FileExistsError:
+                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                    else:
+                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                else:
+                    plt.savefig(save_path)
+
             plt.show()
         
         if which == 'sfd':
-            shear_values = self.shear_fn(x)
             fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram")
             ax.plot(x, shear_values, color='orange', label="SFD")
             ax.set_xticks(range(0, self.length+1,1))
@@ -384,29 +401,32 @@ class Beam:
             ax.set_ylabel("Shear Force (kN)")
             ax.legend(fontsize=8)
             ax.grid()
-            #if save_fig:
-            #    save_path = kwargs.get('save_path')
-            #    if save_path == None:
-            #        main_file_name = __main__.__file__.split('/')[-1]
-            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
-            #        print(store_dir)
-            #        try:
-            #            os.mkdir(store_dir)
-            #        except FileExistsError:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            #        else:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+
+            if save_fig:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    main_file_name = __main__.__file__.split('/')[-1]
+                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
+                    print(store_dir)
+                    try:
+                        os.mkdir(store_dir)
+                    except FileExistsError:
+                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                    else:
+                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                else:
+                    plt.savefig(save_path)
+
             plt.show()
                   
         if which == 'both':
-            shear_values = self.shear_fn(x)
-            moments = self.mom_fn(x)
-
-            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(8,8), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD")
+            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD")
             axs[0].plot(x,shear_values,color='orange')
             axs[0].set_title("SFD")
             axs[0].set_ylabel("Shear Force (kN)")
-            axs[1].plot(x, moments,color='green')
+            axs[1].plot(x, moment_values,color='green')
             axs[1].set_xticks(range(0, self.length+1,1))
             axs[1].set_title("BMD")
             axs[1].set_xlabel("x (m)")
@@ -416,19 +436,31 @@ class Beam:
                 ax.set_xlim(-0.5, self.length+0.5)
                 ax.axhline(y=0, linewidth=3, color='k')
                 ax.grid()
-            #if save_fig:
-            #    save_path = kwargs.get('save_path')
-            #    if save_path == None:
-            #        main_file_name = __main__.__file__.split('/')[-1]
-            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
-            #        print(store_dir)
-            #        try:
-            #            os.mkdir(store_dir)
-            #        except FileExistsError:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            #        else:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            plt.show()
+
+            if kwargs.get('details') == True:
+                axs[1].plot(posx_maxbm, max_bm, 'ko')
+                axs[1].text(posx_maxbm+25*dx, max_bm , s= r"$M_{max}$ ="+str(round(max_bm, 2)), fontsize='xx-small', fontweight='light')
+
+            if save_fig:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    main_file_name = __main__.__file__.split('/')[-1]
+                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
+                    print(store_dir)
+                    try:
+                        os.mkdir(store_dir)
+                    except FileExistsError:
+                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                    else:
+                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                else:
+                    plt.savefig(save_path)
+
+            if show_graph:
+                plt.show()
+
 
 class Load:
     '''
