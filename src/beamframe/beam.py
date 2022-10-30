@@ -359,24 +359,27 @@ class Beam:
         shear_values = self.shear_fn(x)
 
         # (y,x) in matplotib graph for maximum bending moment
-        max_bm, posx_maxbm = np.max(moment_values), x[np.argmax(moment_values)]
-
-
+        max_bm, posx_maxbm, min_bm, posx_minbm = float(np.max(moment_values)), float(x[np.argmax(moment_values)]), float(np.min(moment_values)), float(x[np.argmin(moment_values)])
+        max_sf, posx_maxsf, min_sf, posx_minsf = float(np.max(shear_values)), float(x[np.argmax(shear_values)]), float(np.min(shear_values)), float(x[np.argmin(shear_values)])
+        
         if which == 'bmd':
             fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram", dpi=DPI)
             ax.plot(x, moment_values, color='orange', label="BMD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
+            ax.set_ylim(min_bm-0.5, max_bm+0.5)
             ax.axhline(y=0, linewidth=3, color='k', label='Beam')
             ax.set_title("Bending Moment Diagram")
             ax.set_xlabel("x (m)")
             ax.set_ylabel("Bending Moment (kNm)")
             ax.legend(fontsize=8)
-            ax.grid()
+            ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
                 ax.plot(posx_maxbm, max_bm, 'ko')
-                ax.text(posx_maxbm+25*dx, max_bm , s= r"$M_{max}$ ="+str(round(max_bm, 2)), fontsize='xx-small', fontweight='light')
+                ax.text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+                ax.plot(posx_minbm, min_bm, 'ko')
+                ax.text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
             
             if save_fig:
                 save_path = kwargs.get('save_path')
@@ -403,12 +406,20 @@ class Beam:
             ax.plot(x, shear_values, color='orange', label="SFD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
+            ax.set_ylim(min_sf-0.5, max_sf+0.5)
             ax.axhline(y=0,linewidth=3, color='k', label='Beam')
             ax.set_title("Shear Force Diagram")
             ax.set_xlabel("x (m)")
             ax.set_ylabel("Shear Force (kN)")
             ax.legend(fontsize=8)
-            ax.grid()
+            ax.grid(linewidth=1, color='gainsboro')
+
+            if kwargs.get('details') == True:
+                ax.plot(posx_maxsf, max_sf, 'ko')
+                ax.plot(posx_minsf, min_sf, 'ko')
+                ax.text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                ax.text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+
 
             if save_fig:
                 save_path = kwargs.get('save_path')
@@ -434,21 +445,31 @@ class Beam:
             fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
             axs[0].plot(x,shear_values,color='orange')
             axs[0].set_title("SFD")
+            axs[0].set_ylim(min_sf-0.5, max_sf+0.5)
             axs[0].set_ylabel("Shear Force (kN)")
             axs[1].plot(x, moment_values,color='green')
             axs[1].set_xticks(range(0, self.length+1,1))
             axs[1].set_title("BMD")
             axs[1].set_xlabel("x (m)")
+            axs[1].set_ylim(min_bm-0.5, max_bm+0.5)
             axs[1].set_ylabel("Bending Moment (kNm)")
             fig.suptitle("Comparison of BMD and SFD")
             for ax in axs:
                 ax.set_xlim(-0.5, self.length+0.5)
                 ax.axhline(y=0, linewidth=3, color='k')
-                ax.grid()
+                ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
                 axs[1].plot(posx_maxbm, max_bm, 'ko')
-                axs[1].text(posx_maxbm+25*dx, max_bm , s= r"$M_{max}$ ="+str(round(max_bm, 2)), fontsize='xx-small', fontweight='light')
+                axs[1].text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+                axs[1].plot(posx_minbm, min_bm, 'ko')
+                axs[1].text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+                
+                axs[0].plot(posx_maxsf, max_sf, 'ko')
+                axs[0].plot(posx_minsf, min_sf, 'ko')
+                axs[0].text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                axs[0].text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+
 
             if save_fig:
                 save_path = kwargs.get('save_path')
@@ -469,7 +490,6 @@ class Beam:
 
             if show_graph:
                 plt.show()
-
 
 class Load:
     '''
