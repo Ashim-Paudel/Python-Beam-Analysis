@@ -328,23 +328,30 @@ class Beam:
         self.generate_shear_equation(loads_list)
         self.generate_moment_equation(loads_list)
 
-    def generate_graph(self, which='both', save_fig=False, show_graph=True, **kwargs):
+    def generate_graph(self, which: str = 'both', save_fig:bool = False, show_graph:bool = True, res:str = 'low', **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:
-        - `which:str ='both'` = To specify which graph to show
+        - `which:str ='both'` = To specify which graph to show. Default value = `'both'`
             - Accepted values `('bmd', 'sfd', 'both')`
-        ### Optional Arguments:
         - `save_fig:bool` = To specify whether or not to save the generated image locally
         - `save_path:str` = Relative or absolute of path to save the generate image
             - `save_fig` and `save_path` must be used together
-        - `details: bool` = To specify whether or not to show salient features in graph
+        - `details: bool` = To specify whether or not to show salient features in graph like contraflexure, inflexion
+        - `DPI:int = 100` = Resolution of graph to be shown.
+            - Note: Don't use DPI(values greater than 100) and `show_graph=True` together. It will create render error.
         """        
         diagrams = ('bmd', 'sfd', 'both')
         if which.lower() in diagrams:
             pass
         else:
             raise ValueError(f"Unexpected graph type {which}")
+
+        resolution = {'high':500, 'medium':250, 'low':100, 'h':500, 'm':250, 'l':100} #list of possible resolutions
+        if res.lower() in resolution.keys():
+            DPI = resolution[res]
+        else:
+            raise ValueError(f"Unexpected resolution type {res}\n use 'high' or 'medium' or 'low'" )
         
         # creating numpy array to plot those values
         x,dx = np.linspace(-1, self.length, 1000, retstep=True)
@@ -356,7 +363,7 @@ class Beam:
 
 
         if which == 'bmd':
-            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram")
+            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram", dpi=DPI)
             ax.plot(x, moment_values, color='orange', label="BMD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
@@ -386,12 +393,13 @@ class Beam:
                         save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
                         plt.savefig(save_path)
                 else:
-                    plt.savefig(save_path)
+                    plt.savefig(save_path, dpi=DPI)
 
-            plt.show()
+            if show_graph:
+                plt.show()
         
         if which == 'sfd':
-            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram")
+            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram", dpi=DPI)
             ax.plot(x, shear_values, color='orange', label="SFD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
@@ -417,12 +425,13 @@ class Beam:
                         save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
                         plt.savefig(save_path)
                 else:
-                    plt.savefig(save_path)
+                    plt.savefig(save_path, dpi=DPI)
 
-            plt.show()
+            if show_graph:
+                plt.show()
                   
         if which == 'both':
-            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD")
+            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
             axs[0].plot(x,shear_values,color='orange')
             axs[0].set_title("SFD")
             axs[0].set_ylabel("Shear Force (kN)")
@@ -456,7 +465,7 @@ class Beam:
                         save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
                         plt.savefig(save_path)
                 else:
-                    plt.savefig(save_path)
+                    plt.savefig(save_path, dpi=DPI)
 
             if show_graph:
                 plt.show()
