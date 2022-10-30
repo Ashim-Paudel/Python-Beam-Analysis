@@ -95,7 +95,7 @@ Here are few optional keyword arguments
 |S.N | Method | Arguments | Description |
 |-- | -- | -- | -- |
 | 1. | `fast_solve`| `loads_list` | Pass list (or tuple) of all load, moment, reaction and hinge elements present in beam. <br> This method will: <br> 1. Calculate Reactions <br> 2. Generate Shear and Bending Moment Equation |
-|2.| `generate_graph` | `which:str = 'both' , save_fig:bool = False , show_graph:bool = True, res:str = 'low'` | By default this generate will both Bending Moment Diagram(BMD) and Shear Force Diagram (SFD) stacked vertically. <br> To obtain seperate graphs change default value `which = 'both'` to `'sfd'` or `'bmd'` <br> To change resolution use `res` and accepted values are `('low', 'medium', 'high') or ('l', 'm', 'h')`<br>**Note** *Don't use `res`(values other than `'low'`) and `show_graph=True` together. It will create render error.*|
+|2.| `generate_graph` | `which:str = 'both' , save_fig:bool = False , show_graph:bool = True, res:str = 'low'` | By default this generate will both Bending Moment Diagram(BMD) and Shear Force Diagram (SFD) stacked vertically. <br> To obtain seperate graphs change default value `which = 'both'` to `'sfd'` or `'bmd'` <br> To change resolution use `res` and accepted values are `('low', 'medium', 'high') or ('l', 'm', 'h')`<br>**Note:** *Don't use `res`(values other than `'low'`) and `show_graph=True` together. It will create render error.*|
 |3. | `add_loads` | `load_list`| Pass list of force generating objects. This will add the net loads in x and y direction. <br> Possible loads are `(PointLoad, Reaction, UDL, UVL)` |
 | 4. | `add_moments` | `momgen_list` <br> **optional:** `about=0` | Pass in list of moment generating objects like `(PointLoad,Reaction, UDL, UVL, PointMoment)` <br> By default this function takes moment about origin. <br> If you want to take moment about any other point, use Optional argument `about` and pass any x-coordinate value. |
 | 5. | `add_hinge` | `hinge, mom_gens` | This method must be used iff there is hinge object in beam. A hinge object and list(or tuple) of moment generating objects are expected arguments |
@@ -212,6 +212,9 @@ It allows structure to move which reduces the reactive stresses.
 ### Example-1: Solving Simplest Beam
 The simplest possible code to solve simply supported beam with pointload at middle of span.
 ```
+#import module
+from beamframe.beam import *
+
 # create a beam of length 5m
 b = Beam(5)
 
@@ -225,11 +228,13 @@ b.generate_graph()
 
 ```
 **Graph:**
+
 ![SFD and BMD of simply supported beam with pointload at mid of span](https://ashimp.com.np/beamframe/images/readme_example_1.png)
 
 ### Example-2: Cantilever beam with udl
 
 ```
+from beamframe.beam import *
 
 # create a beam of length 5m
 b = Beam(5)
@@ -243,4 +248,28 @@ b.generate_graph()
 
 ```
 **Graph:**
+
 ![SFD and BMD of cantilever beam with udl](https://ashimp.com.np/beamframe/images/readme_example_2.png)
+
+### Example-3: Overhanging beam with internal hinge, and 3 supports
+> *Note*: In `b.generate_graph`: use `details=True` to show details like max and min bending moment, max and minimum shear force. `save_fig=True` to save figure of desired quality specified by quality in `res`
+```
+from beamframe.beam import *
+
+b = Beam(10)
+ra = Reaction(0, 'h', 'A')
+p1 = PointLoad(1,100, inverted=True, inclination=40)
+m1 = PointMoment(2.5,20, ccw=False)
+rd = Reaction(3.5, 'r', 'D')
+h = Hinge(5, side='r')
+udl = UDL(5,10,2)
+rf = Reaction(7, 'r', 'F')
+p2 = PointLoad(b.length, 50, inverted=True)
+
+lds = (ra, p1, m1, rd, h, udl, rf, p2)
+b.fast_solve(lds)
+b.generate_graph(which='both', details=True, save_fig=True, show_graph=False, res='h')
+```
+**Graph**:
+
+![Example 3](https://ashimp.com.np/beamframe/images/readme_example_3.png)

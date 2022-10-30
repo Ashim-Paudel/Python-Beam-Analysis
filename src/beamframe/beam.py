@@ -44,9 +44,6 @@ class Beam:
     # initial kwargs lists for simply supported beam
     simply_supported = ('Elasticity', 'MOA')
 
-    # fonts specification for graphs
-    plt.rc('font', family='serif', size=14)
-    plt.rc('axes', autolimit_mode='round_numbers') #to manipulate ylimits
 
     def __init__(self, length: float, **kwargs):
         self.length = length
@@ -342,7 +339,11 @@ class Beam:
         - `details: bool` = To specify whether or not to show salient features in graph like contraflexure, inflexion
         - `DPI:int = 100` = Resolution of graph to be shown.
             - Note: Don't use res(values other than low) and `show_graph=True` together. It will create render error.
-        """        
+        """    
+        # Rc parameters:
+        plt.rc('font', family='serif', size=12)
+        plt.rc('axes', autolimit_mode='round_numbers')  
+
         diagrams = ('bmd', 'sfd', 'both')
         if which.lower() in diagrams:
             pass
@@ -379,12 +380,12 @@ class Beam:
             if kwargs.get('details') == True:
             
                 if round(max_bm,0)!=0:
-                    ax.plot(posx_maxbm, max_bm, 'ko')
-                    ax.text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+                    ax.plot(posx_maxbm, max_bm, c='0.5', marker='o', ms=5)
+                    ax.text(posx_maxbm, max_bm+50*max_bm/1000 , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
 
                 if round(min_bm,0)!=0: #plotting 0 as min bending moment will interfere with beam line
-                    ax.plot(posx_minbm, min_bm, 'ko')
-                    ax.text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+                    ax.plot(posx_minbm, min_bm, c='0.5', marker='o', ms=5)
+                    ax.text(posx_minbm+10*dx, min_bm-50*max_bm/1000 , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
             
             if save_fig:
                 save_path = kwargs.get('save_path')
@@ -420,11 +421,11 @@ class Beam:
 
             if kwargs.get('details') == True:
                 if round(max_sf,0)!=0:
-                    ax.plot(posx_maxsf, max_sf, 'ko')
-                    ax.text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                    ax.plot(posx_maxsf, max_sf, c='0.5', marker='o', ms=5)
+                    ax.text(posx_maxsf+10*dx, max_sf+50*max_sf/1000 , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
                 if round(min_sf,0)!=0:
-                    ax.plot(posx_minsf, min_sf, 'ko')
-                    ax.text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+                    ax.plot(posx_minsf, min_sf, c='0.5', marker='o', ms=5)
+                    ax.text(posx_minsf+10*dx, min_sf-50*max_sf/1000 , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
 
 
             if save_fig:
@@ -465,18 +466,18 @@ class Beam:
 
             if kwargs.get('details') == True:
                 if round(max_bm,0)!=0:
-                    axs[1].plot(posx_maxbm, max_bm, 'ko')
-                    axs[1].text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+                    axs[1].plot(posx_maxbm, max_bm, c='0.5', marker='o', ms=5)
+                    axs[1].text(posx_maxbm, max_bm+50*max_bm/1000 , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
                 if round(min_bm,0)!=0:
-                    axs[1].plot(posx_minbm, min_bm, 'ko')
-                    axs[1].text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+                    axs[1].plot(posx_minbm, min_bm, c='0.5', marker='o', ms=5)
+                    axs[1].text(posx_minbm+10*dx, min_bm-50*max_bm/1000, s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
                 
                 if round(max_sf,0)!=0:
-                    axs[0].plot(posx_maxsf, max_sf, 'ko')
-                    axs[0].text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                    axs[0].plot(posx_maxsf, max_sf, c='0.5', marker='o', ms=5)
+                    axs[0].text(posx_maxsf+10*dx, max_sf+50*max_sf/1000 , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
                 if round(min_sf,0)!=0:
-                    axs[0].plot(posx_minsf, min_sf, 'ko')
-                    axs[0].text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+                    axs[0].plot(posx_minsf, min_sf, c='0.5', marker='o', ms=5)
+                    axs[0].text(posx_minsf+10*dx, min_sf-50*max_sf/1000 , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
 
 
             if save_fig:
