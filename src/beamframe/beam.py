@@ -341,7 +341,7 @@ class Beam:
             - `save_fig` and `save_path` must be used together
         - `details: bool` = To specify whether or not to show salient features in graph like contraflexure, inflexion
         - `DPI:int = 100` = Resolution of graph to be shown.
-            - Note: Don't use DPI(values greater than 100) and `show_graph=True` together. It will create render error.
+            - Note: Don't use res(values other than low) and `show_graph=True` together. It will create render error.
         """        
         diagrams = ('bmd', 'sfd', 'both')
         if which.lower() in diagrams:
