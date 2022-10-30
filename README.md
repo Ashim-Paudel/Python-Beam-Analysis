@@ -102,6 +102,8 @@ Here are few optional keyword arguments
 | 6. | `calculate_reactions` | `reaction_list` | Pass in list(or tuple) of unknown reactions object to solve and assign reaction values |
 | 7. | `generate_shear_equation` | `loads` | Pass in list(or tuple) of load generators to generate shear equation |
 | 8. | `generate_moment_equation` | `loads` | Pass in list(or tuple) of load generators to generate moment equation |
+| 9. | `save_data` | `fname:str, ndivs:int=1000, format:str='txt'` | Saves numerical values of Shear Forces and Moment Values in text file |
+
 
 **Note**
 > Just first and second methods are sufficient to solve beam and generate graph. But, to keep track of ongoing process use other methods. *Remember not to use `fast_solve` and other methods(excluding method no. 2). Doing this will re-add all those loads you've passed again.*
