@@ -2,7 +2,7 @@ import __main__
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
-
+import os
 """
 # About Beam library:
 A beam is a structural element that primarily resists loads applied laterally to the beam's axis.
@@ -43,8 +43,10 @@ class Beam:
     """
     # initial kwargs lists for simply supported beam
     simply_supported = ('Elasticity', 'MOA')
+
     # fonts specification for graphs
     plt.rc('font', family='serif', size=14)
+    plt.rc('axes', autolimit_mode='round_numbers') #to manipulate ylimits
 
     def __init__(self, length: float, **kwargs):
         self.length = length
@@ -328,28 +330,43 @@ class Beam:
         self.generate_shear_equation(loads_list)
         self.generate_moment_equation(loads_list)
 
-    def generate_graph(self, which='both', save_fig=False, **kwargs):
+    def generate_graph(self, which: str = 'both', save_fig:bool = False, show_graph:bool = True, res:str = 'low', **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:
-        - `which:str ='both'` = To specify which graph to show
+        - `which:str ='both'` = To specify which graph to show. Default value = `'both'`
             - Accepted values `('bmd', 'sfd', 'both')`
-        ### Optional Arguments:
         - `save_fig:bool` = To specify whether or not to save the generated image locally
         - `save_path:str` = Relative or absolute of path to save the generate image
             - `save_fig` and `save_path` must be used together
+        - `details: bool` = To specify whether or not to show salient features in graph like contraflexure, inflexion
+        - `DPI:int = 100` = Resolution of graph to be shown.
+            - Note: Don't use res(values other than low) and `show_graph=True` together. It will create render error.
         """        
         diagrams = ('bmd', 'sfd', 'both')
         if which.lower() in diagrams:
             pass
         else:
             raise ValueError(f"Unexpected graph type {which}")
+
+        resolution = {'high':500, 'medium':250, 'low':100, 'h':500, 'm':250, 'l':100} #list of possible resolutions
+        if res.lower() in resolution.keys():
+            DPI = resolution[res]
+        else:
+            raise ValueError(f"Unexpected resolution type {res}\n Use 'high' or 'medium' or 'low'" )
         
-        x = np.linspace(-1, self.length, 1000)
+        # creating numpy array to plot those values
+        x,dx = np.linspace(-1, self.length, 1000, retstep=True)
+        moment_values = self.mom_fn(x)
+        shear_values = self.shear_fn(x)
+
+        # (y,x) in matplotib graph for maximum bending moment
+        max_bm, posx_maxbm, min_bm, posx_minbm = float(np.max(moment_values)), float(x[np.argmax(moment_values)]), float(np.min(moment_values)), float(x[np.argmin(moment_values)])
+        max_sf, posx_maxsf, min_sf, posx_minsf = float(np.max(shear_values)), float(x[np.argmax(shear_values)]), float(np.min(shear_values)), float(x[np.argmin(shear_values)])
+        
         if which == 'bmd':
-            moments = self.mom_fn(x)
-            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram")
-            ax.plot(x, moments, color='orange', label="BMD")
+            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram", dpi=DPI)
+            ax.plot(x, moment_values, color='orange', label="BMD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
             ax.axhline(y=0, linewidth=3, color='k', label='Beam')
@@ -357,24 +374,40 @@ class Beam:
             ax.set_xlabel("x (m)")
             ax.set_ylabel("Bending Moment (kNm)")
             ax.legend(fontsize=8)
-            ax.grid()
-            #if save_fig:
-            #    save_path = kwargs.get('save_path')
-            #    if save_path == None:
-            #        main_file_name = __main__.__file__.split('/')[-1]
-            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
-            #        print(store_dir)
-            #        try:
-            #            os.mkdir(store_dir)
-            #        except FileExistsError:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            #        else:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            plt.show()
+            ax.grid(linewidth=1, color='gainsboro')
+
+            if kwargs.get('details') == True:
+            
+                if round(max_bm,0)!=0:
+                    ax.plot(posx_maxbm, max_bm, 'ko')
+                    ax.text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+
+                if round(min_bm,0)!=0: #plotting 0 as min bending moment will interfere with beam line
+                    ax.plot(posx_minbm, min_bm, 'ko')
+                    ax.text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+            
+            if save_fig:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    main_file_name = __main__.__file__.split('/')[-1]
+                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
+                    print(store_dir)
+                    try:
+                        os.mkdir(store_dir)
+                    except FileExistsError:
+                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                    else:
+                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                else:
+                    plt.savefig(save_path, dpi=DPI)
+
+            if show_graph:
+                plt.show()
         
         if which == 'sfd':
-            shear_values = self.shear_fn(x)
-            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram")
+            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram", dpi=DPI)
             ax.plot(x, shear_values, color='orange', label="SFD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
@@ -383,30 +416,43 @@ class Beam:
             ax.set_xlabel("x (m)")
             ax.set_ylabel("Shear Force (kN)")
             ax.legend(fontsize=8)
-            ax.grid()
-            #if save_fig:
-            #    save_path = kwargs.get('save_path')
-            #    if save_path == None:
-            #        main_file_name = __main__.__file__.split('/')[-1]
-            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
-            #        print(store_dir)
-            #        try:
-            #            os.mkdir(store_dir)
-            #        except FileExistsError:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            #        else:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            plt.show()
+            ax.grid(linewidth=1, color='gainsboro')
+
+            if kwargs.get('details') == True:
+                if round(max_sf,0)!=0:
+                    ax.plot(posx_maxsf, max_sf, 'ko')
+                    ax.text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(min_sf,0)!=0:
+                    ax.plot(posx_minsf, min_sf, 'ko')
+                    ax.text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+
+
+            if save_fig:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    main_file_name = __main__.__file__.split('/')[-1]
+                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
+                    print(store_dir)
+                    try:
+                        os.mkdir(store_dir)
+                    except FileExistsError:
+                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                    else:
+                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                else:
+                    plt.savefig(save_path, dpi=DPI)
+
+            if show_graph:
+                plt.show()
                   
         if which == 'both':
-            shear_values = self.shear_fn(x)
-            moments = self.mom_fn(x)
-
-            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(8,8), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD")
+            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
             axs[0].plot(x,shear_values,color='orange')
             axs[0].set_title("SFD")
             axs[0].set_ylabel("Shear Force (kN)")
-            axs[1].plot(x, moments,color='green')
+            axs[1].plot(x, moment_values,color='green')
             axs[1].set_xticks(range(0, self.length+1,1))
             axs[1].set_title("BMD")
             axs[1].set_xlabel("x (m)")
@@ -415,20 +461,43 @@ class Beam:
             for ax in axs:
                 ax.set_xlim(-0.5, self.length+0.5)
                 ax.axhline(y=0, linewidth=3, color='k')
-                ax.grid()
-            #if save_fig:
-            #    save_path = kwargs.get('save_path')
-            #    if save_path == None:
-            #        main_file_name = __main__.__file__.split('/')[-1]
-            #        store_dir = __main__.__file__.replace(main_file_name, 'images/')
-            #        print(store_dir)
-            #        try:
-            #            os.mkdir(store_dir)
-            #        except FileExistsError:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            #        else:
-            #            save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-            plt.show()
+                ax.grid(linewidth=1, color='gainsboro')
+
+            if kwargs.get('details') == True:
+                if round(max_bm,0)!=0:
+                    axs[1].plot(posx_maxbm, max_bm, 'ko')
+                    axs[1].text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+                if round(min_bm,0)!=0:
+                    axs[1].plot(posx_minbm, min_bm, 'ko')
+                    axs[1].text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+                
+                if round(max_sf,0)!=0:
+                    axs[0].plot(posx_maxsf, max_sf, 'ko')
+                    axs[0].text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(min_sf,0)!=0:
+                    axs[0].plot(posx_minsf, min_sf, 'ko')
+                    axs[0].text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+
+
+            if save_fig:
+                save_path = kwargs.get('save_path')
+                if save_path == None:
+                    main_file_name = __main__.__file__.split('/')[-1]
+                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
+                    print(store_dir)
+                    try:
+                        os.mkdir(store_dir)
+                    except FileExistsError:
+                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                    else:
+                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+                        plt.savefig(save_path)
+                else:
+                    plt.savefig(save_path, dpi=DPI)
+
+            if show_graph:
+                plt.show()
 
 class Load:
     '''

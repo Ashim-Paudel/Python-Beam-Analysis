@@ -94,10 +94,10 @@ Here are few optional keyword arguments
 
 |S.N | Method | Arguments | Description |
 |-- | -- | -- | -- |
-| 1. | `fast_solve`| `loads_list` | Pass list (or tuple) of all load, moment, reaction and hinge elements present in beam. $\\$ This method will: $\\$ 1. Calculate Reactions $\\$ 2. Generate Shear and Bending Moment Equation |
-|2.| `generate_graph` | `which:str = 'both'` | By default this generate will both Bending Moment Diagram(BMD) and Shear Force Diagram (SFD) stacked vertically. $\\$ To obtain seperate graphs change default value `which = 'both'` to `'sfd'` or `'bmd'` |
-|3. | `add_loads` | `load_list`| Pass list of force generating objects. This will add the net loads in x and y direction. $\\$ Possible loads are `(PointLoad, Reaction, UDL, UVL)` |
-| 4. | `add_moments` | `momgen_list` $\\$ **optional:** `about=0` | Pass in list of moment generating objects like `(PointLoad,Reaction, UDL, UVL, PointMoment)` $\\$ By default this function takes moment about origin. $\\$ If you want to take moment about any other point, use Optional argument `about` and pass any x-coordinate value. |
+| 1. | `fast_solve`| `loads_list` | Pass list (or tuple) of all load, moment, reaction and hinge elements present in beam. <br> This method will: <br> 1. Calculate Reactions <br> 2. Generate Shear and Bending Moment Equation |
+|2.| `generate_graph` | `which:str = 'both' , save_fig:bool = False , show_graph:bool = True, res:str = 'low'` | By default this generate will both Bending Moment Diagram(BMD) and Shear Force Diagram (SFD) stacked vertically. <br> To obtain seperate graphs change default value `which = 'both'` to `'sfd'` or `'bmd'` <br> To change resolution use `res` and accepted values are `('low', 'medium', 'high') or ('l', 'm', 'h')`<br>**Note** *Don't use `res`(values other than `'low'`) and `show_graph=True` together. It will create render error.*|
+|3. | `add_loads` | `load_list`| Pass list of force generating objects. This will add the net loads in x and y direction. <br> Possible loads are `(PointLoad, Reaction, UDL, UVL)` |
+| 4. | `add_moments` | `momgen_list` <br> **optional:** `about=0` | Pass in list of moment generating objects like `(PointLoad,Reaction, UDL, UVL, PointMoment)` <br> By default this function takes moment about origin. <br> If you want to take moment about any other point, use Optional argument `about` and pass any x-coordinate value. |
 | 5. | `add_hinge` | `hinge, mom_gens` | This method must be used iff there is hinge object in beam. A hinge object and list(or tuple) of moment generating objects are expected arguments |
 | 6. | `calculate_reactions` | `reaction_list` | Pass in list(or tuple) of unknown reactions object to solve and assign reaction values |
 | 7. | `generate_shear_equation` | `loads` | Pass in list(or tuple) of load generators to generate shear equation |
