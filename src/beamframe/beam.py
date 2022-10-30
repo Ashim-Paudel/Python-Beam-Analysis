@@ -43,8 +43,10 @@ class Beam:
     """
     # initial kwargs lists for simply supported beam
     simply_supported = ('Elasticity', 'MOA')
+
     # fonts specification for graphs
     plt.rc('font', family='serif', size=14)
+    plt.rc('axes', autolimit_mode='round_numbers') #to manipulate ylimits
 
     def __init__(self, length: float, **kwargs):
         self.length = length
@@ -367,7 +369,6 @@ class Beam:
             ax.plot(x, moment_values, color='orange', label="BMD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
-            ax.set_ylim(min_bm-0.5, max_bm+0.5)
             ax.axhline(y=0, linewidth=3, color='k', label='Beam')
             ax.set_title("Bending Moment Diagram")
             ax.set_xlabel("x (m)")
@@ -410,7 +411,6 @@ class Beam:
             ax.plot(x, shear_values, color='orange', label="SFD")
             ax.set_xticks(range(0, self.length+1,1))
             ax.set_xlim(-0.5, self.length+0.5)
-            ax.set_ylim(min_sf-0.5, max_sf+0.5)
             ax.axhline(y=0,linewidth=3, color='k', label='Beam')
             ax.set_title("Shear Force Diagram")
             ax.set_xlabel("x (m)")
@@ -451,13 +451,11 @@ class Beam:
             fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
             axs[0].plot(x,shear_values,color='orange')
             axs[0].set_title("SFD")
-            axs[0].set_ylim(min_sf-0.5, max_sf+0.5)
             axs[0].set_ylabel("Shear Force (kN)")
             axs[1].plot(x, moment_values,color='green')
             axs[1].set_xticks(range(0, self.length+1,1))
             axs[1].set_title("BMD")
             axs[1].set_xlabel("x (m)")
-            axs[1].set_ylim(min_bm-0.5, max_bm+0.5)
             axs[1].set_ylabel("Bending Moment (kNm)")
             fig.suptitle("Comparison of BMD and SFD")
             for ax in axs:
