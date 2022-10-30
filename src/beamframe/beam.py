@@ -351,7 +351,7 @@ class Beam:
         if res.lower() in resolution.keys():
             DPI = resolution[res]
         else:
-            raise ValueError(f"Unexpected resolution type {res}\n use 'high' or 'medium' or 'low'" )
+            raise ValueError(f"Unexpected resolution type {res}\n Use 'high' or 'medium' or 'low'" )
         
         # creating numpy array to plot those values
         x,dx = np.linspace(-1, self.length, 1000, retstep=True)
@@ -376,10 +376,14 @@ class Beam:
             ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
-                ax.plot(posx_maxbm, max_bm, 'ko')
-                ax.text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
-                ax.plot(posx_minbm, min_bm, 'ko')
-                ax.text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+            
+                if round(max_bm,0)!=0:
+                    ax.plot(posx_maxbm, max_bm, 'ko')
+                    ax.text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+
+                if round(min_bm,0)!=0: #plotting 0 as min bending moment will interfere with beam line
+                    ax.plot(posx_minbm, min_bm, 'ko')
+                    ax.text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
             
             if save_fig:
                 save_path = kwargs.get('save_path')
@@ -415,10 +419,12 @@ class Beam:
             ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
-                ax.plot(posx_maxsf, max_sf, 'ko')
-                ax.plot(posx_minsf, min_sf, 'ko')
-                ax.text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
-                ax.text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(max_sf,0)!=0:
+                    ax.plot(posx_maxsf, max_sf, 'ko')
+                    ax.text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(min_sf,0)!=0:
+                    ax.plot(posx_minsf, min_sf, 'ko')
+                    ax.text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
 
 
             if save_fig:
@@ -460,15 +466,19 @@ class Beam:
                 ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
-                axs[1].plot(posx_maxbm, max_bm, 'ko')
-                axs[1].text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
-                axs[1].plot(posx_minbm, min_bm, 'ko')
-                axs[1].text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+                if round(max_bm,0)!=0:
+                    axs[1].plot(posx_maxbm, max_bm, 'ko')
+                    axs[1].text(posx_maxbm, max_bm+15*dx , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+                if round(min_bm,0)!=0:
+                    axs[1].plot(posx_minbm, min_bm, 'ko')
+                    axs[1].text(posx_minbm+10*dx, min_bm-30*dx , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
                 
-                axs[0].plot(posx_maxsf, max_sf, 'ko')
-                axs[0].plot(posx_minsf, min_sf, 'ko')
-                axs[0].text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
-                axs[0].text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(max_sf,0)!=0:
+                    axs[0].plot(posx_maxsf, max_sf, 'ko')
+                    axs[0].text(posx_maxsf+10*dx, max_sf+15*dx , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(min_sf,0)!=0:
+                    axs[0].plot(posx_minsf, min_sf, 'ko')
+                    axs[0].text(posx_minsf+10*dx, min_sf-30*dx , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
 
 
             if save_fig:

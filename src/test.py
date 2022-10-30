@@ -9,4 +9,4 @@ rb = Reaction(b.length, 'r','B')
 
 loads = (uvl1, uvl2, ra, rb)
 b.fast_solve(loads)
-b.generate_graph(which='bmd', details=True)
+b.generate_graph(which='both', details=True)
