@@ -1,5 +1,5 @@
 """
-Test module for singularity function
+Module for singularity function
 
 """
 def SingularityFunction(x:float, a:float, n):

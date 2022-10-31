@@ -37,17 +37,29 @@ This version of module supports:
 ### Program Motivation
 > I studied about Beams first time in my second semester which had an included course of *Applied Mechanics - I (Statics)*. About 10-15 marks question were sure from beams and frames in board examination. But, while practicing beam analysis questions, from past question collection, one thing that collection was lacking was solution to those questions. Not even reaction values were given. So, it would cost us 15 minutes for even simple reaction calculation error. So, I thought of making this library from that period. And, I turned this thought into action in my 3rd semester's vacation.
 
-# Installation
+# Installation and usage
 ```
 pip install beamframe
 ```
+
 **Requirements**
+
 ```
 "numpy>=1.19",
 "sympy>=1",
 "matplotlib>=3"
 ```
+> **Note** All requirements will be installed automatically while installing this module.
+
 - [PyPi link](https://pypi.org/project/beamframe/)
+
+### Importing the module
+Any one way of importing can be adopted
+```
+from beamframe import beam
+#or 
+from beamframe.beam import *
+```
 
 # Documentation
 
@@ -84,7 +96,8 @@ One can use and follow thier own sign conventions in this module. But, default v
 
 ### Arguments 
 
-`length(float)`: length of a beam
+- `length(float)`: length of a beam
+- `ndivs(int)` : number of divisions of beam. This specifies number of points along beam in which shear force and bending moment values will be calculated.
 
 Here are few optional keyword arguments
 - `E(float)` = Modulus of Elasticity of beam material 
@@ -102,7 +115,9 @@ Here are few optional keyword arguments
 | 6. | `calculate_reactions` | `reaction_list` | Pass in list(or tuple) of unknown reactions object to solve and assign reaction values |
 | 7. | `generate_shear_equation` | `loads` | Pass in list(or tuple) of load generators to generate shear equation |
 | 8. | `generate_moment_equation` | `loads` | Pass in list(or tuple) of load generators to generate moment equation |
-| 9. | `save_data` | `fname:str, ndivs:int=1000, format:str='txt'` | Saves numerical values of Shear Forces and Moment Values in text file |
+| 9. | `generate_shear_values` | `loads` | Pass in list(or tuple) of load generators to generate shear force values along various points in beam specified by `ndivs` argument while creating beam object |
+| 10. | `generate_moment_values` | `loads`| Pass in list(or tuple) of load generators to generate bending moment values along various points in beam specified by `ndivs` argument while creating beam object |
+| 11. | `save_data` | `fname:str, format:str='txt'` | Saves numerical values of Shear Forces and Moment Values in text file |
 
 
 **Note**
@@ -112,6 +127,9 @@ Here are few optional keyword arguments
 
 **Example**
 ```
+#importing the module
+from beamframe.beam import *
+
 # to create a beam of length 5m:
 b = Beam(5)
 ```
