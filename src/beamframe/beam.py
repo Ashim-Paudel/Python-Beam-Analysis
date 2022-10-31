@@ -581,24 +581,23 @@ class Beam:
             if show_graph:
                 plt.show()
 
-    def save_data(self, fname:str, ndivs:int=1000, format:str='txt'):
+    def save_data(self, fname:str, format:str='txt'):
         """
         ### Description
         Saves numerical values of Shear Forces and Moment Values in text file 
+        The number of data are created as specified in ndivs in beam class construct
 
         ### 
         - `fname:str` = Path / File name to save the data to
-        - `ndivs:int` = Divisions of beam length to compute those values on
         - `format:str = 'txt'` = File extension. Default is '.txt'. Supported = `('npy', 'txt', 'gz')`
         """
-
-        x = np.linspace(0, self.length, ndivs)
-        shear_values = self.mom_fn(x)
-        moment_values = self.mom_fn(x)
+        beam_0 = np.argwhere(self.xbeam >= 0)[0][0]
+        x = self.xbeam[self.xbeam >= 0]
+        shear_values = self.shear_values[beam_0::]
+        moment_values = self.moment_values[beam_0::]
         data_array = np.array((x, shear_values, moment_values)).T
         heading = "x\tshear\tmoment"
-        np.savetxt(fname+format, data_array, delimiter="\t", header=heading)
-
+        np.savetxt(fname+'.'+format, data_array, delimiter="\t", header=heading)
 
 class Load:
     '''
