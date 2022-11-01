@@ -415,7 +415,7 @@ class Beam:
         self.generate_moment_equation(loads_list)
         self.generate_moment_values(loads_list)
 
-    def generate_graph(self, which:str = 'both', save_fig:bool = False, show_graph:bool = True, res:str = 'low', **kwargs):
+    def generate_graph(self, which:str = 'both', save_fig:bool = False, filename=None, extension='png', res:str = 'low', show_graph:bool = True, **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:
@@ -444,6 +444,12 @@ class Beam:
         else:
             raise ValueError(f"Unexpected resolution type {res}\n Use 'high' or 'medium' or 'low'" )
         
+        formats = ('png', 'pdf', 'eps', 'svg')
+        if extension.lower() in formats:
+            pass
+        else:
+            raise ValueError(f"Unknown image extension {extension}\n Supported extensions are: {formats}")
+
         # (y,x) in matplotib graph for maximum bending moment
         max_bm, posx_maxbm, min_bm, posx_minbm = np.max(self.moment_values), self.xbeam[np.argmax(self.moment_values)], np.min(self.moment_values), self.xbeam[np.argmin(self.moment_values)]
         max_sf, posx_maxsf, min_sf, posx_minsf = np.max(self.shear_values) , self.xbeam[np.argmax(self.shear_values)], np.min(self.shear_values), self.xbeam[np.argmin(self.shear_values)]
@@ -469,26 +475,6 @@ class Beam:
                 if round(min_bm,0)!=0: #plotting 0 as min bending moment will interfere with beam line
                     ax.plot(posx_minbm, min_bm, c='0.5', marker='o', ms=5)
                     ax.text(posx_minbm+10*self.dxbeam, min_bm-50*max_bm/1000 , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
-            
-            if save_fig:
-                save_path = kwargs.get('save_path')
-                if save_path == None:
-                    main_file_name = __main__.__file__.split('/')[-1]
-                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
-                    print(store_dir)
-                    try:
-                        os.mkdir(store_dir)
-                    except FileExistsError:
-                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
-                        plt.savefig(save_path)
-                    else:
-                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-                        plt.savefig(save_path)
-                else:
-                    plt.savefig(save_path, dpi=DPI)
-
-            if show_graph:
-                plt.show()
         
         if which == 'sfd':
             fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram", dpi=DPI)
@@ -509,27 +495,6 @@ class Beam:
                 if round(min_sf,0)!=0:
                     ax.plot(posx_minsf, min_sf, c='0.5', marker='o', ms=5)
                     ax.text(posx_minsf+10*self.dxbeam, min_sf-50*max_sf/1000 , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
-
-
-            if save_fig:
-                save_path = kwargs.get('save_path')
-                if save_path == None:
-                    main_file_name = __main__.__file__.split('/')[-1]
-                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
-                    print(store_dir)
-                    try:
-                        os.mkdir(store_dir)
-                    except FileExistsError:
-                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
-                        plt.savefig(save_path)
-                    else:
-                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-                        plt.savefig(save_path)
-                else:
-                    plt.savefig(save_path, dpi=DPI)
-
-            if show_graph:
-                plt.show()
                   
         if which == 'both':
             fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
@@ -562,28 +527,30 @@ class Beam:
                     axs[0].plot(posx_minsf, min_sf, c='0.5', marker='o', ms=5)
                     axs[0].text(posx_minsf+10*self.dxbeam, min_sf-50*max_sf/1000 , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
 
-
-            if save_fig:
-                save_path = kwargs.get('save_path')
-                if save_path == None:
-                    main_file_name = __main__.__file__.split('/')[-1]
-                    store_dir = __main__.__file__.replace(main_file_name, 'images/')
-                    print(store_dir)
-                    try:
-                        os.mkdir(store_dir)
-                    except FileExistsError:
-                        save_path = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
-                        plt.savefig(save_path)
-                    else:
-                        save_path = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
-                        plt.savefig(save_path)
+        if save_fig:
+            main_file_name = __main__.__file__.split('/')[-1]
+            if filename == None:
+                store_dir = __main__.__file__.replace(main_file_name, 'images/') 
+                print(store_dir)
+                try:
+                    os.mkdir(store_dir) #try to create images/ directory in same directory level
+                except FileExistsError:
+                    filename = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png" #now append full file name
+                    plt.savefig(filename)
                 else:
-                    plt.savefig(save_path, dpi=DPI)
+                    filename = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
+                    plt.savefig(filename)
+            else:
+                if filename[-3:] in formats and '.' == filename[-4]:
+                    save_path = __main__.__file__.replace(main_file_name, filename)
+                else:
+                    save_path = __main__.__file__.replace(main_file_name, f'{filename}.{extension}')
+                plt.savefig(save_path, dpi=DPI)
 
-            if show_graph:
-                plt.show()
+        if show_graph:
+            plt.show()
 
-    def save_data(self, fname:str, format:str='txt'):
+    def save_data(self, fname:str, fformat:str='txt'):
         """
         ### Description
         Saves numerical values of Shear Forces and Moment Values in text file 
@@ -591,15 +558,25 @@ class Beam:
 
         ### 
         - `fname:str` = Path / File name to save the data to
-        - `format:str = 'txt'` = File extension. Default is '.txt'. Supported = `('npy', 'txt', 'gz')`
+        - `fformat:str = 'txt'` = File extension. Default is '.txt'. Supported = `('npy', 'txt', 'gz')`
         """
+        fformat = fformat.lower()
+        formats = ('npy', 'txt', 'gz')
+        if fformat in formats:
+            pass
+        else:
+            raise ValueError(f"Unknown file format {fformat}\n Supported formats are: {formats}")
+
+        main_file_name = __main__.__file__.split('/')[-1]
+        save_path = __main__.__file__.replace(main_file_name, fname) 
+
         beam_0 = np.argwhere(self.xbeam >= 0)[0][0]
         x = self.xbeam[self.xbeam >= 0]
         shear_values = self.shear_values[beam_0::]
         moment_values = self.moment_values[beam_0::]
         data_array = np.array((x, shear_values, moment_values)).T
         heading = "x\tshear\tmoment"
-        np.savetxt(fname+'.'+format, data_array, delimiter="\t", header=heading)
+        np.savetxt(save_path+'.'+fformat, data_array, delimiter="\t", header=heading)
 
 class Load:
     '''
