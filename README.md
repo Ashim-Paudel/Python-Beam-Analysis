@@ -23,12 +23,10 @@ A beam is a structural element that primarily resists loads applied laterally to
 *Source: [Wikipedia](https://en.wikipedia.org/wiki/Beam_(structure))*
 
 ### About the module
-- **Module Version: 0.0.1**
-
 This module is aimed to solve Statically Determinate, Geometrically Stable two dimensional Beam just by using 3 equations of static equilibrium.
 $F_x = 0, F_y = 0 \text{ and } M_{point} = 0$.
 
-This version of module supports:
+This module supports:
 - determinate 2D beam with Point Loads, Uniformly Distributed Loads, Uniformly Varying Loads, Point Moments
 - Fixed or Hinged or Roller types of support conditions
 - A Beam with Internal Hinge
