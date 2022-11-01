@@ -78,6 +78,8 @@ class Beam:
         self.shear_values = None
         self.moment_values = None
 
+        self.max_bm, self.posx_maxbm, self.min_bm, self.posx_minbm = 0,0,0,0
+        self.max_sf, self.posx_maxsf, self.min_sf, self.posx_minsf = 0,0,0,0
 
     def add_loads(self, load_list: object):
         """
@@ -384,6 +386,14 @@ class Beam:
 
         return self.moment_values
 
+    def generate_significant_values(self):
+        """
+        # Description
+        Generates significant values of shear force diagram like minimum and maximum bending moment, shear force etc.
+        """
+        self.max_bm, self.posx_maxbm, self.min_bm, self.posx_minbm = np.max(self.moment_values), self.xbeam[np.argmax(self.moment_values)], np.min(self.moment_values), self.xbeam[np.argmin(self.moment_values)]
+        self.max_sf, self.posx_maxsf, self.min_sf, self.posx_minsf = np.max(self.shear_values) , self.xbeam[np.argmax(self.shear_values)], np.min(self.shear_values), self.xbeam[np.argmin(self.shear_values)]
+        
 
     def fast_solve(self, loads_list:object, n:int=1000):
         """
@@ -451,9 +461,7 @@ class Beam:
             raise ValueError(f"Unknown image extension {extension}\n Supported extensions are: {formats}")
 
         # (y,x) in matplotib graph for maximum bending moment
-        max_bm, posx_maxbm, min_bm, posx_minbm = np.max(self.moment_values), self.xbeam[np.argmax(self.moment_values)], np.min(self.moment_values), self.xbeam[np.argmin(self.moment_values)]
-        max_sf, posx_maxsf, min_sf, posx_minsf = np.max(self.shear_values) , self.xbeam[np.argmax(self.shear_values)], np.min(self.shear_values), self.xbeam[np.argmin(self.shear_values)]
-        
+
         if which == 'bmd':
             fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram", dpi=DPI)
             ax.plot(self.xbeam, self.moment_values, color='orange', label="BMD")
@@ -467,14 +475,15 @@ class Beam:
             ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
-            
-                if round(max_bm,0)!=0:
-                    ax.plot(posx_maxbm, max_bm, c='0.5', marker='o', ms=5)
-                    ax.text(posx_maxbm, max_bm+50*max_bm/1000 , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
+                self.generate_significant_values()
 
-                if round(min_bm,0)!=0: #plotting 0 as min bending moment will interfere with beam line
-                    ax.plot(posx_minbm, min_bm, c='0.5', marker='o', ms=5)
-                    ax.text(posx_minbm+10*self.dxbeam, min_bm-50*max_bm/1000 , s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+                if round(self.max_bm,0)!=0:
+                    ax.plot(self.posx_maxbm, self.max_bm, c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_maxbm, self.max_bm+50*self.max_bm/1000 , s= r"$M_{max}$ = "+str(round(self.max_bm, 1)), fontsize='x-small', fontweight='light')
+
+                if round(self.min_bm,0)!=0: #plotting 0 as min bending moment will interfere with beam line
+                    ax.plot(self.posx_minbm, self.min_bm, c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_minbm+10*self.dxbeam, self.min_bm-50*self.max_bm/1000 , s= r"$M_{min}$ = "+str(round(self.min_bm, 1)), fontsize='x-small', fontweight='light')
         
         if which == 'sfd':
             fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram", dpi=DPI)
@@ -489,12 +498,13 @@ class Beam:
             ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
-                if round(max_sf,0)!=0:
-                    ax.plot(posx_maxsf, max_sf, c='0.5', marker='o', ms=5)
-                    ax.text(posx_maxsf+10*self.dxbeam, max_sf+50*max_sf/1000 , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
-                if round(min_sf,0)!=0:
-                    ax.plot(posx_minsf, min_sf, c='0.5', marker='o', ms=5)
-                    ax.text(posx_minsf+10*self.dxbeam, min_sf-50*max_sf/1000 , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+                self.generate_significant_values()
+                if round(self.max_sf,0)!=0:
+                    ax.plot(self.posx_maxsf, self.max_sf, c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_maxsf+10*self.dxbeam, self.max_sf+50*self.max_sf/1000 , s= r"$V_{max}$ = "+str(round(self.max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(self.min_sf,0)!=0:
+                    ax.plot(self.posx_minsf, self.min_sf, c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_minsf+10*self.dxbeam, self.min_sf-50*self.max_sf/1000 , s= r"$V_{min}$ = "+str(round(self.min_sf, 1)), fontsize='x-small', fontweight='light')
                   
         if which == 'both':
             fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
@@ -513,19 +523,20 @@ class Beam:
                 ax.grid(linewidth=1, color='gainsboro')
 
             if kwargs.get('details') == True:
-                if round(max_bm,0)!=0:
-                    axs[1].plot(posx_maxbm, max_bm, c='0.5', marker='o', ms=5)
-                    axs[1].text(posx_maxbm, max_bm+50*max_bm/1000 , s= r"$M_{max}$ = "+str(round(max_bm, 1)), fontsize='x-small', fontweight='light')
-                if round(min_bm,0)!=0:
-                    axs[1].plot(posx_minbm, min_bm, c='0.5', marker='o', ms=5)
-                    axs[1].text(posx_minbm+10*self.dxbeam, min_bm-50*max_bm/1000, s= r"$M_{min}$ = "+str(round(min_bm, 1)), fontsize='x-small', fontweight='light')
+                self.generate_significant_values()
+                if round(self.max_bm,0)!=0:
+                    axs[1].plot(self.posx_maxbm, self.max_bm, c='0.5', marker='o', ms=5)
+                    axs[1].text(self.posx_maxbm, self.max_bm+50*self.max_bm/1000 , s= r"$M_{max}$ = "+str(round(self.max_bm, 1)), fontsize='x-small', fontweight='light')
+                if round(self.min_bm,0)!=0:
+                    axs[1].plot(self.posx_minbm, self.min_bm, c='0.5', marker='o', ms=5)
+                    axs[1].text(self.posx_minbm+10*self.dxbeam, self.min_bm-50*self.max_bm/1000, s= r"$M_{min}$ = "+str(round(self.min_bm, 1)), fontsize='x-small', fontweight='light')
                 
-                if round(max_sf,0)!=0:
-                    axs[0].plot(posx_maxsf, max_sf, c='0.5', marker='o', ms=5)
-                    axs[0].text(posx_maxsf+10*self.dxbeam, max_sf+50*max_sf/1000 , s= r"$V_{max}$ = "+str(round(max_sf, 1)), fontsize='x-small', fontweight='light')
-                if round(min_sf,0)!=0:
-                    axs[0].plot(posx_minsf, min_sf, c='0.5', marker='o', ms=5)
-                    axs[0].text(posx_minsf+10*self.dxbeam, min_sf-50*max_sf/1000 , s= r"$V_{min}$ = "+str(round(min_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(self.max_sf,0)!=0:
+                    axs[0].plot(self.posx_maxsf, self.max_sf, c='0.5', marker='o', ms=5)
+                    axs[0].text(self.posx_maxsf+10*self.dxbeam, self.max_sf+50*self.max_sf/1000 , s= r"$V_{max}$ = "+str(round(self.max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(self.min_sf,0)!=0:
+                    axs[0].plot(self.posx_minsf, self.min_sf, c='0.5', marker='o', ms=5)
+                    axs[0].text(self.posx_minsf+10*self.dxbeam, self.min_sf-50*self.max_sf/1000 , s= r"$V_{min}$ = "+str(round(self.min_sf, 1)), fontsize='x-small', fontweight='light')
 
         if save_fig:
             main_file_name = __main__.__file__.split('/')[-1]
@@ -575,8 +586,23 @@ class Beam:
         shear_values = self.shear_values[beam_0::]
         moment_values = self.moment_values[beam_0::]
         data_array = np.array((x, shear_values, moment_values)).T
-        heading = "x\tshear\tmoment"
-        np.savetxt(save_path+'.'+fformat, data_array, delimiter="\t", header=heading)
+        self.generate_significant_values()
+        details = f'''
+        Significant values:
+        ===================\n
+        Beam Length: {self.length}
+        Shear Force(kN):
+        \t Maximum: {self.max_sf}\t\tPosition: {self.posx_maxsf}
+        \t Minimum: {self.min_sf}\t\tPosition: {self.posx_minsf}
+        Bending Moment(kNm):
+        \t Maximum: {self.max_bm}\t\tPosition: {self.posx_maxbm}
+        \t Minimum: {self.min_bm}\t\tPosition: {self.posx_minbm}
+        \n
+        =================================================================
+
+        x\t\t\t\t\t Shear Force\t\t\t\t\t Bending Moment
+        '''
+        np.savetxt(save_path+'.'+fformat, data_array, delimiter="\t", header=details)
 
 class Load:
     '''
