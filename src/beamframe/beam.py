@@ -1,8 +1,10 @@
+import os
+
 import __main__
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
-import os
+
 from .SingularityFunction import SingularityFunction
 
 """
@@ -378,7 +380,7 @@ class Beam:
             elif isinstance(mom_gen, UVL):
                 self.moment_values += mom_gen.startload * macaulay(self.xbeam, mom_gen.start, 2)/2 + mom_gen.gradient * macaulay(self.xbeam, mom_gen.start, 3)/6
                 if mom_gen.end < self.length: #add uvl in opposite direction
-                    self.moment_values -= ( mom_gen.endload * macaulay('x', mom_gen.end, 2)/2 + mom_gen.gradient * macaulay('x', mom_gen.end, 3)/6)
+                    self.moment_values -= ( mom_gen.endload * macaulay(self.xbeam, mom_gen.end, 2)/2 + mom_gen.gradient * macaulay(self.xbeam, mom_gen.end, 3)/6)
 
         return self.moment_values
 
@@ -413,7 +415,7 @@ class Beam:
         self.generate_moment_equation(loads_list)
         self.generate_moment_values(loads_list)
 
-    def generate_graph(self, which: str = 'both', save_fig:bool = False, show_graph:bool = True, res:str = 'low', **kwargs):
+    def generate_graph(self, which:str = 'both', save_fig:bool = False, show_graph:bool = True, res:str = 'low', **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:

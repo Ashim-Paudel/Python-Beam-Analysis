@@ -2,12 +2,12 @@
 Module for singularity function
 
 """
-def SingularityFunction(x:float, a:float, n):
+def SingularityFunction(x:float, a:float, n:int):
     """
     Main singularity function definition
     """
-    shift = (x-a)
-    exp = float(n)
+    shift = float(x-a)
+    exp = int(n)
     if isinstance(shift, complex):
         if not shift.imag == 0:
             raise ValueError("Singularity Functions are valid for real numbers only.")
@@ -22,7 +22,7 @@ def SingularityFunction(x:float, a:float, n):
         if exp < 0:
             return 0
         else:
-            return float(float(shift)**exp)
+            return shift**exp
 
             
 
