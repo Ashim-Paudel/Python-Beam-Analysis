@@ -116,6 +116,7 @@ Here are few optional keyword arguments
 | 9. | `generate_shear_values` | `loads` | Pass in list(or tuple) of load generators to generate shear force values along various points in beam specified by `ndivs` argument while creating beam object |
 | 10. | `generate_moment_values` | `loads`| Pass in list(or tuple) of load generators to generate bending moment values along various points in beam specified by `ndivs` argument while creating beam object |
 | 11. | `save_data` | `fname:str, format:str='txt'` | Saves numerical values of Shear Forces and Moment Values in text file |
+| 12. | `generate_significant_values` | - | Generates salient values like maximum and minimum bending moment and shear force, contraflexures and other |
 
 
 **Note**
