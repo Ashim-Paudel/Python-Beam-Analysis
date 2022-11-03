@@ -52,8 +52,9 @@ class Beam:
     def __init__(self, length: float, ndivs=1000, **kwargs):
         self.length = length
         self.ndivs = ndivs # this is required to create that number of points along which moment and shear values will be calculated
-        self.xbeam, self.dxbeam = np.linspace(-0.5, self.length, self.ndivs, retstep=True) # creating beam fragments of that beam points
-        
+        self.xbeam, self.dxbeam = np.linspace(-1, self.length, self.ndivs, retstep=True) # creating beam fragments of that beam points
+        self.beam_0 = np.argwhere(self.xbeam >= 0)[0][0] #cause we've initialized beam length from -1, we must keep track of where positive value for beam starts
+
         # modulus of elasticity of the material
         self.E = kwargs.get('E') or kwargs.get('Elasticity')
         self.I = kwargs.get('I') or kwargs.get('MOA')  # second moment of area
@@ -581,26 +582,25 @@ class Beam:
         main_file_name = __main__.__file__.split('/')[-1]
         save_path = __main__.__file__.replace(main_file_name, fname) 
 
-        beam_0 = np.argwhere(self.xbeam >= 0)[0][0]
         x = self.xbeam[self.xbeam >= 0]
-        shear_values = self.shear_values[beam_0::]
-        moment_values = self.moment_values[beam_0::]
+        shear_values = self.shear_values[self.beam_0::]
+        moment_values = self.moment_values[self.beam_0::]
         data_array = np.array((x, shear_values, moment_values)).T
         self.generate_significant_values()
         details = f'''
         Significant values:
         ===================\n
-        Beam Length: {self.length}
+        Beam Length: {self.length}m
         Shear Force(kN):
-        \t Maximum: {self.max_sf}\t\tPosition: {self.posx_maxsf}
-        \t Minimum: {self.min_sf}\t\tPosition: {self.posx_minsf}
+        \t Maximum: {self.max_sf}\t\tPosition: {self.posx_maxsf}m
+        \t Minimum: {self.min_sf}\t\tPosition: {self.posx_minsf}m
         Bending Moment(kNm):
-        \t Maximum: {self.max_bm}\t\tPosition: {self.posx_maxbm}
-        \t Minimum: {self.min_bm}\t\tPosition: {self.posx_minbm}
+        \t Maximum: {self.max_bm}\t\tPosition: {self.posx_maxbm}m
+        \t Minimum: {self.min_bm}\t\tPosition: {self.posx_minbm}m
         \n
-        =================================================================
+=======================================================================================
 
-        x\t\t\t\t\t Shear Force\t\t\t\t\t Bending Moment
+        x\t\t\t Shear Force\t\t\t Bending Moment
         '''
         np.savetxt(save_path+'.'+fformat, data_array, delimiter="\t", header=details)
 
