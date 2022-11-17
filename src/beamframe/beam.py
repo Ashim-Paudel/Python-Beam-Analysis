@@ -38,7 +38,7 @@ class Beam:
         `kwargs`: Here are few optional keyword arguments
         - `E(float)` = Modulus of Elasticity of beam material 
         - `I(float)` = 2nd moment of area of the cross section of beam
-    
+
         #### Example
         ```
         # to create a beam of length 5m:
@@ -48,12 +48,14 @@ class Beam:
     # initial kwargs lists for simply supported beam
     simply_supported = ('Elasticity', 'MOA')
 
-
     def __init__(self, length: float, ndivs=1000, **kwargs):
         self.length = length
-        self.ndivs = ndivs # this is required to create that number of points along which moment and shear values will be calculated
-        self.xbeam, self.dxbeam = np.linspace(-1, self.length, self.ndivs, retstep=True) # creating beam fragments of that beam points
-        self.beam_0 = np.argwhere(self.xbeam >= 0)[0][0] #cause we've initialized beam length from -1, we must keep track of where positive value for beam starts
+        self.ndivs = ndivs  # this is required to create that number of points along which moment and shear values will be calculated
+        # creating beam fragments of that beam points
+        self.xbeam, self.dxbeam = np.linspace(-1,
+                                              self.length, self.ndivs, retstep=True)
+        # cause we've initialized beam length from -1, we must keep track of where positive value for beam starts
+        self.beam_0 = np.argwhere(self.xbeam >= 0)[0][0]
 
         # modulus of elasticity of the material
         self.E = kwargs.get('E') or kwargs.get('Elasticity')
@@ -67,8 +69,10 @@ class Beam:
         # intitial fx,fy,moment equations
         self.fx = 0  # sp.symbols('fx') #total sum of horizontal force
         self.fy = 0  # sp.symbols('fy') #total sum of vertical force
-        self.m = 0 # sp.symbols('m') #total sum of moments about any point on beam
-        self.m_hinge = 0 # total sum of moments about hinge (of one side of beam only)
+        # sp.symbols('m') #total sum of moments about any point on beam
+        self.m = 0
+        # total sum of moments about hinge (of one side of beam only)
+        self.m_hinge = 0
 
         # initialize variable to store solved reactions, and macaulay's moment and shear function
         self.solved_rxns = None  # initialize variable to store solved values for reactions
@@ -79,8 +83,8 @@ class Beam:
         self.shear_values = None
         self.moment_values = None
 
-        self.max_bm, self.posx_maxbm, self.min_bm, self.posx_minbm = 0,0,0,0
-        self.max_sf, self.posx_maxsf, self.min_sf, self.posx_minsf = 0,0,0,0
+        self.max_bm, self.posx_maxbm, self.min_bm, self.posx_minbm = 0.0, 0.0, 0.0, 0.0
+        self.max_sf, self.posx_maxsf, self.min_sf, self.posx_minsf = 0.0, 0.0, 0.0, 0.0
 
     def add_loads(self, load_list: object):
         """
@@ -155,8 +159,9 @@ class Beam:
         - `mom_gens` = list of moment generators present on the beam.
         """
         if not isinstance(hinge, Hinge):
-            raise ValueError(f"{hinge.__class__.__name__} object cannot be treated as Hinge object")
-        
+            raise ValueError(
+                f"{hinge.__class__.__name__} object cannot be treated as Hinge object")
+
         # dictionary of loads separated to left and right of hinge
         separate_load = {
             'l': [mgen for mgen in mom_gens if mgen.pos < hinge.pos],
@@ -169,21 +174,23 @@ class Beam:
         for side_mom_gen in separate_load[hinge.side[0]]:
             if isinstance(side_mom_gen, PointLoad):
                 self.m_hinge += (side_mom_gen.pos -
-                                    hinge.pos)*side_mom_gen.load_y
+                                 hinge.pos)*side_mom_gen.load_y
             elif isinstance(side_mom_gen, Reaction):
                 self.m_hinge += (side_mom_gen.pos -
-                                    hinge.pos)*side_mom_gen.ry_var
+                                 hinge.pos)*side_mom_gen.ry_var
                 if hasattr(side_mom_gen, 'mom_var'):
                     self.m_hinge += side_mom_gen.mom_var
             elif isinstance(side_mom_gen, PointMoment):
                 self.m_hinge += side_mom_gen.mom
             elif isinstance(side_mom_gen, UDL):
-                if side_mom_gen.end > hinge.pos & side_mom_gen.start<hinge.pos:
+                if side_mom_gen.end > hinge.pos & side_mom_gen.start < hinge.pos:
                     # cut and take left portion of udl
-                    if hinge.side[0]=='l':
-                        cut_udl = UDL(side_mom_gen.start, side_mom_gen.loadpm, hinge.pos-side_mom_gen.end)
+                    if hinge.side[0] == 'l':
+                        cut_udl = UDL(
+                            side_mom_gen.start, side_mom_gen.loadpm, hinge.pos-side_mom_gen.end)
                     else:
-                        cut_udl = UDL(hinge.pos, side_mom_gen.loadpm, side_mom_gen.end-hinge.pos)
+                        cut_udl = UDL(hinge.pos, side_mom_gen.loadpm,
+                                      side_mom_gen.end-hinge.pos)
 
                     self.m_hinge += cut_udl.netload * \
                         (cut_udl.pos-hinge.pos)
@@ -192,22 +199,25 @@ class Beam:
                         (side_mom_gen.pos-hinge.pos)
 
             elif isinstance(side_mom_gen, UVL):
-                #to find the exact load/m value at position where hinge is:
+                # to find the exact load/m value at position where hinge is:
                 if side_mom_gen.start < hinge.pos & side_mom_gen.end > hinge.pos:
-                    w_x = abs(side_mom_gen.startload + side_mom_gen.gradient*(hinge.pos-side_mom_gen.start))
+                    w_x = abs(side_mom_gen.startload +
+                              side_mom_gen.gradient*(hinge.pos-side_mom_gen.start))
                     if hinge.side[0] == 'l':
-                        cut_uvl = UVL(side_mom_gen.start, abs(side_mom_gen.startload), hinge.pos-side_mom_gen.start, w_x)
+                        cut_uvl = UVL(side_mom_gen.start, abs(
+                            side_mom_gen.startload), hinge.pos-side_mom_gen.start, w_x)
                     else:
-                        cut_uvl = UVL(hinge.pos, w_x,side_mom_gen.end-hinge.pos, abs(side_mom_gen.endload))
-                    
+                        cut_uvl = UVL(hinge.pos, w_x, side_mom_gen.end -
+                                      hinge.pos, abs(side_mom_gen.endload))
+
                     self.m_hinge += cut_uvl.netload * (cut_uvl.pos-hinge.pos)
                 else:
                     self.m_hinge += side_mom_gen.netload * \
-                        (side_mom_gen.pos-hinge.pos)         
+                        (side_mom_gen.pos-hinge.pos)
 
             elif isinstance(side_mom_gen, Reaction):
                 self.m_hinge += (side_mom_gen.pos -
-                                    hinge.pos)*side_mom_gen.ry_var
+                                 hinge.pos)*side_mom_gen.ry_var
                 if hasattr(side_mom_gen, 'mom_var'):
                     self.m_hinge += side_mom_gen.mom_var
 
@@ -270,9 +280,11 @@ class Beam:
                         sp.SingularityFunction('x', force_gen.end, 1)
 
             elif isinstance(force_gen, UVL):
-                self.shear_fn += ( force_gen.startload * sp.SingularityFunction('x', force_gen.start, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2 )
-                if force_gen.end < self.length: #add uvl in opposite direction
-                    self.shear_fn -= ( force_gen.endload * sp.SingularityFunction('x', force_gen.end, 1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2 )
+                self.shear_fn += (force_gen.startload * sp.SingularityFunction('x', force_gen.start,
+                                  1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.start, 2)/2)
+                if force_gen.end < self.length:  # add uvl in opposite direction
+                    self.shear_fn -= (force_gen.endload * sp.SingularityFunction('x', force_gen.end,
+                                      1) + force_gen.gradient*sp.SingularityFunction('x', force_gen.end, 2)/2)
 
     def generate_moment_equation(self, loads: object):
         """
@@ -307,11 +319,13 @@ class Beam:
                         sp.SingularityFunction('x', mom_gen.end, 2)/2
 
             elif isinstance(mom_gen, UVL):
-                self.mom_fn += mom_gen.startload * sp.SingularityFunction('x', mom_gen.start, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.start, 3)/6
-                if mom_gen.end < self.length: #add uvl in opposite direction
-                    self.mom_fn -= ( mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/6)
-    
-    def generate_shear_values(self, loads:object):
+                self.mom_fn += mom_gen.startload * sp.SingularityFunction(
+                    'x', mom_gen.start, 2)/2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.start, 3)/6
+                if mom_gen.end < self.length:  # add uvl in opposite direction
+                    self.mom_fn -= (mom_gen.endload * sp.SingularityFunction('x', mom_gen.end, 2) /
+                                    2 + mom_gen.gradient * sp.SingularityFunction('x', mom_gen.end, 3)/6)
+
+    def generate_shear_values(self, loads: object):
         """
         ### Description
         1. Generates Shear Force values due to various force generators along several x positions on beam.
@@ -340,9 +354,11 @@ class Beam:
                         macaulay(self.xbeam, force_gen.end, 1)
 
             elif isinstance(force_gen, UVL):
-                self.shear_values += ( force_gen.startload * macaulay(self.xbeam, force_gen.start, 1) + force_gen.gradient*macaulay(self.xbeam, force_gen.start, 2)/2 )
-                if force_gen.end < self.length: #add uvl in opposite direction
-                    self.shear_values -= ( force_gen.endload * macaulay(self.xbeam, force_gen.end, 1) + force_gen.gradient*macaulay(self.xbeam, force_gen.end, 2)/2 )
+                self.shear_values += (force_gen.startload * macaulay(self.xbeam, force_gen.start,
+                                      1) + force_gen.gradient*macaulay(self.xbeam, force_gen.start, 2)/2)
+                if force_gen.end < self.length:  # add uvl in opposite direction
+                    self.shear_values -= (force_gen.endload * macaulay(self.xbeam, force_gen.end,
+                                          1) + force_gen.gradient*macaulay(self.xbeam, force_gen.end, 2)/2)
 
         return self.shear_values
 
@@ -381,9 +397,12 @@ class Beam:
                         macaulay(self.xbeam, mom_gen.end, 2)/2
 
             elif isinstance(mom_gen, UVL):
-                self.moment_values += mom_gen.startload * macaulay(self.xbeam, mom_gen.start, 2)/2 + mom_gen.gradient * macaulay(self.xbeam, mom_gen.start, 3)/6
-                if mom_gen.end < self.length: #add uvl in opposite direction
-                    self.moment_values -= ( mom_gen.endload * macaulay(self.xbeam, mom_gen.end, 2)/2 + mom_gen.gradient * macaulay(self.xbeam, mom_gen.end, 3)/6)
+                self.moment_values += mom_gen.startload * \
+                    macaulay(self.xbeam, mom_gen.start, 2)/2 + \
+                    mom_gen.gradient * macaulay(self.xbeam, mom_gen.start, 3)/6
+                if mom_gen.end < self.length:  # add uvl in opposite direction
+                    self.moment_values -= (mom_gen.endload * macaulay(self.xbeam, mom_gen.end, 2) /
+                                           2 + mom_gen.gradient * macaulay(self.xbeam, mom_gen.end, 3)/6)
 
         return self.moment_values
 
@@ -392,11 +411,12 @@ class Beam:
         # Description
         Generates significant values of shear force diagram like minimum and maximum bending moment, shear force etc.
         """
-        self.max_bm, self.posx_maxbm, self.min_bm, self.posx_minbm = np.max(self.moment_values), self.xbeam[np.argmax(self.moment_values)], np.min(self.moment_values), self.xbeam[np.argmin(self.moment_values)]
-        self.max_sf, self.posx_maxsf, self.min_sf, self.posx_minsf = np.max(self.shear_values) , self.xbeam[np.argmax(self.shear_values)], np.min(self.shear_values), self.xbeam[np.argmin(self.shear_values)]
-        
+        self.max_bm, self.posx_maxbm, self.min_bm, self.posx_minbm = np.max(self.moment_values), self.xbeam[np.argmax(
+            self.moment_values)], np.min(self.moment_values), self.xbeam[np.argmin(self.moment_values)]
+        self.max_sf, self.posx_maxsf, self.min_sf, self.posx_minsf = np.max(self.shear_values), self.xbeam[np.argmax(
+            self.shear_values)], np.min(self.shear_values), self.xbeam[np.argmin(self.shear_values)]
 
-    def fast_solve(self, loads_list:object, n:int=1000):
+    def fast_solve(self, loads_list: object, n: int = 1000):
         """
         ### Description
         This function will:
@@ -426,7 +446,7 @@ class Beam:
         self.generate_moment_equation(loads_list)
         self.generate_moment_values(loads_list)
 
-    def generate_graph(self, which:str = 'both', save_fig:bool = False, filename=None, extension='png', res:str = 'low', show_graph:bool = True, **kwargs):
+    def generate_graph(self, which: str = 'both', save_fig: bool = False, filename=None, extension='png', res: str = 'low', show_graph: bool = True, **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:
@@ -438,10 +458,10 @@ class Beam:
         - `details: bool` = To specify whether or not to show salient features in graph like contraflexure, inflexion
         - `DPI:int = 100` = Resolution of graph to be shown.
             - Note: Don't use res(values other than low) and `show_graph=True` together. It will create render error.
-        """    
+        """
         # Rc parameters:
         plt.rc('font', family='serif', size=12)
-        plt.rc('axes', autolimit_mode='round_numbers')  
+        plt.rc('axes', autolimit_mode='round_numbers')
 
         diagrams = ('bmd', 'sfd', 'both')
         if which.lower() in diagrams:
@@ -449,24 +469,29 @@ class Beam:
         else:
             raise ValueError(f"Unexpected graph type {which}")
 
-        resolution = {'high':500, 'medium':250, 'low':100, 'h':500, 'm':250, 'l':100} #list of possible resolutions
+        resolution = {'high': 500, 'medium': 250, 'low': 100,
+                      'h': 500, 'm': 250, 'l': 100}  # list of possible resolutions
         if res.lower() in resolution.keys():
             DPI = resolution[res]
         else:
-            raise ValueError(f"Unexpected resolution type {res}\n Use 'high' or 'medium' or 'low'" )
-        
+            raise ValueError(
+                f"Unexpected resolution type {res}\n Use 'high' or 'medium' or 'low'")
+
         formats = ('png', 'pdf', 'eps', 'svg')
         if extension.lower() in formats:
             pass
         else:
-            raise ValueError(f"Unknown image extension {extension}\n Supported extensions are: {formats}")
+            raise ValueError(
+                f"Unknown image extension {extension}\n Supported extensions are: {formats}")
 
         # (y,x) in matplotib graph for maximum bending moment
 
         if which == 'bmd':
-            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Bending Moment Diagram", dpi=DPI)
-            ax.plot(self.xbeam, self.moment_values, color='orange', label="BMD")
-            ax.set_xticks(range(0, self.length+1,1))
+            fig, ax = plt.subplots(
+                facecolor='w', edgecolor='w', num="Bending Moment Diagram", dpi=DPI)
+            ax.plot(self.xbeam, self.moment_values,
+                    color='orange', label="BMD")
+            ax.set_xticks(range(0, self.length+1, 1))
             ax.set_xlim(-0.5, self.length+0.5)
             ax.axhline(y=0, linewidth=3, color='k', label='Beam')
             ax.set_title("Bending Moment Diagram")
@@ -478,20 +503,26 @@ class Beam:
             if kwargs.get('details') == True:
                 self.generate_significant_values()
 
-                if round(self.max_bm,0)!=0:
-                    ax.plot(self.posx_maxbm, self.max_bm, c='0.5', marker='o', ms=5)
-                    ax.text(self.posx_maxbm, self.max_bm+50*self.max_bm/1000 , s= r"$M_{max}$ = "+str(round(self.max_bm, 1)), fontsize='x-small', fontweight='light')
+                if round(self.max_bm, 0) != 0:
+                    ax.plot(self.posx_maxbm, self.max_bm,
+                            c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_maxbm, self.max_bm+50*self.max_bm/1000, s=r"$M_{max}$ = "+str(
+                        round(self.max_bm, 1)), fontsize='x-small', fontweight='light')
 
-                if round(self.min_bm,0)!=0: #plotting 0 as min bending moment will interfere with beam line
-                    ax.plot(self.posx_minbm, self.min_bm, c='0.5', marker='o', ms=5)
-                    ax.text(self.posx_minbm+10*self.dxbeam, self.min_bm-50*self.max_bm/1000 , s= r"$M_{min}$ = "+str(round(self.min_bm, 1)), fontsize='x-small', fontweight='light')
-        
+                # plotting 0 as min bending moment will interfere with beam line
+                if round(self.min_bm, 0) != 0:
+                    ax.plot(self.posx_minbm, self.min_bm,
+                            c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_minbm+10*self.dxbeam, self.min_bm-50*self.max_bm/1000,
+                            s=r"$M_{min}$ = "+str(round(self.min_bm, 1)), fontsize='x-small', fontweight='light')
+
         if which == 'sfd':
-            fig, ax = plt.subplots(facecolor='w', edgecolor='w', num="Shear Force Diagram", dpi=DPI)
+            fig, ax = plt.subplots(
+                facecolor='w', edgecolor='w', num="Shear Force Diagram", dpi=DPI)
             ax.plot(self.xbeam, self.shear_values, color='orange', label="SFD")
-            ax.set_xticks(range(0, self.length+1,1))
+            ax.set_xticks(range(0, self.length+1, 1))
             ax.set_xlim(-0.5, self.length+0.5)
-            ax.axhline(y=0,linewidth=3, color='k', label='Beam')
+            ax.axhline(y=0, linewidth=3, color='k', label='Beam')
             ax.set_title("Shear Force Diagram")
             ax.set_xlabel("x (m)")
             ax.set_ylabel("Shear Force (kN)")
@@ -500,20 +531,25 @@ class Beam:
 
             if kwargs.get('details') == True:
                 self.generate_significant_values()
-                if round(self.max_sf,0)!=0:
-                    ax.plot(self.posx_maxsf, self.max_sf, c='0.5', marker='o', ms=5)
-                    ax.text(self.posx_maxsf+10*self.dxbeam, self.max_sf+50*self.max_sf/1000 , s= r"$V_{max}$ = "+str(round(self.max_sf, 1)), fontsize='x-small', fontweight='light')
-                if round(self.min_sf,0)!=0:
-                    ax.plot(self.posx_minsf, self.min_sf, c='0.5', marker='o', ms=5)
-                    ax.text(self.posx_minsf+10*self.dxbeam, self.min_sf-50*self.max_sf/1000 , s= r"$V_{min}$ = "+str(round(self.min_sf, 1)), fontsize='x-small', fontweight='light')
-                  
+                if round(self.max_sf, 0) != 0:
+                    ax.plot(self.posx_maxsf, self.max_sf,
+                            c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_maxsf+10*self.dxbeam, self.max_sf+50*self.max_sf/1000,
+                            s=r"$V_{max}$ = "+str(round(self.max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(self.min_sf, 0) != 0:
+                    ax.plot(self.posx_minsf, self.min_sf,
+                            c='0.5', marker='o', ms=5)
+                    ax.text(self.posx_minsf+10*self.dxbeam, self.min_sf-50*self.max_sf/1000,
+                            s=r"$V_{min}$ = "+str(round(self.min_sf, 1)), fontsize='x-small', fontweight='light')
+
         if which == 'both':
-            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(10,10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
-            axs[0].plot(self.xbeam,self.shear_values,color='orange')
+            fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(
+                10, 10), edgecolor='w', facecolor='w', sharex=True, num="SFD vs BMD", dpi=DPI)
+            axs[0].plot(self.xbeam, self.shear_values, color='orange')
             axs[0].set_title("SFD")
             axs[0].set_ylabel("Shear Force (kN)")
-            axs[1].plot(self.xbeam, self.moment_values,color='green')
-            axs[1].set_xticks(range(0, self.length+1,1))
+            axs[1].plot(self.xbeam, self.moment_values, color='green')
+            axs[1].set_xticks(range(0, self.length+1, 1))
             axs[1].set_title("BMD")
             axs[1].set_xlabel("x (m)")
             axs[1].set_ylabel("Bending Moment (kNm)")
@@ -525,44 +561,57 @@ class Beam:
 
             if kwargs.get('details') == True:
                 self.generate_significant_values()
-                if round(self.max_bm,0)!=0:
-                    axs[1].plot(self.posx_maxbm, self.max_bm, c='0.5', marker='o', ms=5)
-                    axs[1].text(self.posx_maxbm, self.max_bm+50*self.max_bm/1000 , s= r"$M_{max}$ = "+str(round(self.max_bm, 1)), fontsize='x-small', fontweight='light')
-                if round(self.min_bm,0)!=0:
-                    axs[1].plot(self.posx_minbm, self.min_bm, c='0.5', marker='o', ms=5)
-                    axs[1].text(self.posx_minbm+10*self.dxbeam, self.min_bm-50*self.max_bm/1000, s= r"$M_{min}$ = "+str(round(self.min_bm, 1)), fontsize='x-small', fontweight='light')
-                
-                if round(self.max_sf,0)!=0:
-                    axs[0].plot(self.posx_maxsf, self.max_sf, c='0.5', marker='o', ms=5)
-                    axs[0].text(self.posx_maxsf+10*self.dxbeam, self.max_sf+50*self.max_sf/1000 , s= r"$V_{max}$ = "+str(round(self.max_sf, 1)), fontsize='x-small', fontweight='light')
-                if round(self.min_sf,0)!=0:
-                    axs[0].plot(self.posx_minsf, self.min_sf, c='0.5', marker='o', ms=5)
-                    axs[0].text(self.posx_minsf+10*self.dxbeam, self.min_sf-50*self.max_sf/1000 , s= r"$V_{min}$ = "+str(round(self.min_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(self.max_bm, 0) != 0:
+                    axs[1].plot(self.posx_maxbm, self.max_bm,
+                                c='0.5', marker='o', ms=5)
+                    axs[1].text(self.posx_maxbm, self.max_bm+50*self.max_bm/1000, s=r"$M_{max}$ = "+str(
+                        round(self.max_bm, 1)), fontsize='x-small', fontweight='light')
+                if round(self.min_bm, 0) != 0:
+                    axs[1].plot(self.posx_minbm, self.min_bm,
+                                c='0.5', marker='o', ms=5)
+                    axs[1].text(self.posx_minbm+10*self.dxbeam, self.min_bm-50*self.max_bm/1000,
+                                s=r"$M_{min}$ = "+str(round(self.min_bm, 1)), fontsize='x-small', fontweight='light')
+
+                if round(self.max_sf, 0) != 0:
+                    axs[0].plot(self.posx_maxsf, self.max_sf,
+                                c='0.5', marker='o', ms=5)
+                    axs[0].text(self.posx_maxsf+10*self.dxbeam, self.max_sf+50*self.max_sf/1000,
+                                s=r"$V_{max}$ = "+str(round(self.max_sf, 1)), fontsize='x-small', fontweight='light')
+                if round(self.min_sf, 0) != 0:
+                    axs[0].plot(self.posx_minsf, self.min_sf,
+                                c='0.5', marker='o', ms=5)
+                    axs[0].text(self.posx_minsf+10*self.dxbeam, self.min_sf-50*self.max_sf/1000,
+                                s=r"$V_{min}$ = "+str(round(self.min_sf, 1)), fontsize='x-small', fontweight='light')
 
         if save_fig:
             main_file_name = __main__.__file__.split('/')[-1]
             if filename == None:
-                store_dir = __main__.__file__.replace(main_file_name, 'images/') 
+                store_dir = __main__.__file__.replace(
+                    main_file_name, 'images/')
                 print(store_dir)
                 try:
-                    os.mkdir(store_dir) #try to create images/ directory in same directory level
+                    # try to create images/ directory in same directory level
+                    os.mkdir(store_dir)
                 except FileExistsError:
-                    filename = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png" #now append full file name
+                    # now append full file name
+                    filename = f"{store_dir}{__main__.__file__.split('/')[-1][:-3]}.png"
                     plt.savefig(filename)
                 else:
                     filename = f"{store_dir}/{__main__.__file__.split('/')[-1][:-3]}.png"
                     plt.savefig(filename)
             else:
                 if filename[-3:] in formats and '.' == filename[-4]:
-                    save_path = __main__.__file__.replace(main_file_name, filename)
+                    save_path = __main__.__file__.replace(
+                        main_file_name, filename)
                 else:
-                    save_path = __main__.__file__.replace(main_file_name, f'{filename}.{extension}')
+                    save_path = __main__.__file__.replace(
+                        main_file_name, f'{filename}.{extension}')
                 plt.savefig(save_path, dpi=DPI)
 
         if show_graph:
             plt.show()
 
-    def save_data(self, fname:str, fformat:str='txt'):
+    def save_data(self, fname: str, fformat: str = 'txt'):
         """
         ### Description
         Saves numerical values of Shear Forces and Moment Values in text file 
@@ -577,10 +626,11 @@ class Beam:
         if fformat in formats:
             pass
         else:
-            raise ValueError(f"Unknown file format {fformat}\n Supported formats are: {formats}")
+            raise ValueError(
+                f"Unknown file format {fformat}\n Supported formats are: {formats}")
 
         main_file_name = __main__.__file__.split('/')[-1]
-        save_path = __main__.__file__.replace(main_file_name, fname) 
+        save_path = __main__.__file__.replace(main_file_name, fname)
 
         x = self.xbeam[self.xbeam >= 0]
         shear_values = self.shear_values[self.beam_0::]
@@ -602,7 +652,9 @@ class Beam:
 
         x\t\t\t Shear Force\t\t\t Bending Moment
         '''
-        np.savetxt(save_path+'.'+fformat, data_array, delimiter="\t", header=details)
+        np.savetxt(save_path+'.'+fformat, data_array,
+                   delimiter="\t", header=details)
+
 
 class Load:
     '''
@@ -718,9 +770,9 @@ class UVL:
             self.startload = startload
             self.endload = endload
 
-        #gradient of uvl:
+        # gradient of uvl:
         self.gradient = (self.endload-self.startload)/span
-        if startload>endload:
+        if startload > endload:
             self.zero_load = startload / abs(self.gradient)
 
         # for upper triangular part: 1/2*b*h
