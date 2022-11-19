@@ -75,6 +75,8 @@ class Beam:
         self.m_hinge = 0
 
         # initialize variable to store solved reactions, and macaulay's moment and shear function
+        # initialize variable to store all support reactions in that beam
+        self.reactions_list = []
         self.solved_rxns = None  # initialize variable to store solved values for reactions
         self.mom_fn = 0  # initialize variable to store bending moment values in numpy array
         self.shear_fn = 0  # initialize variable to store shear values in numpy array
@@ -235,6 +237,7 @@ class Beam:
         Fy_eq = sp.Eq(self.fy, 0)
         M_eq = sp.Eq(self.m, 0)
         M_hinge = sp.Eq(self.m_hinge, 0)
+        self.reactions_list = reaction_list
 
         eval_values = []  # initialize an empty list to contain reactions variables to be solved
         possible_rxn = ['rx_var', 'ry_var', 'mom_var']
@@ -611,7 +614,7 @@ class Beam:
         if show_graph:
             plt.show()
 
-    def save_data(self, fname: str, fformat: str = 'txt'):
+    def save_data(self, fname: str, fformat: str = 'txt', reactions: list = [None]):
         """
         ### Description
         Saves numerical values of Shear Forces and Moment Values in text file 
@@ -637,10 +640,30 @@ class Beam:
         moment_values = self.moment_values[self.beam_0::]
         data_array = np.array((x, shear_values, moment_values)).T
         self.generate_significant_values()
+
+        support_details = '''Support Conditions:\n'''
+        # adding support details for beam
+        for rxn in self.reactions_list:
+            if isinstance(rxn, Reaction):
+                support_details += f"\t\t\t{rxn.pos_sym}-> {rxn.type}\t Position: {rxn.pos}m\n"
+            else:
+                raise ValueError(f"{rxn} cannot be treated as Reaction object")
+
+        reaction_details = '''Reaction Values:\n'''
+        # adding reaction values details
+        for (reaction, val) in self.solved_rxns.items():
+            reaction_details += f"\t\t\t{reaction} = {val}\n"
+
         details = f'''
-        Significant values:
-        ===================\n
+        Beam Description:
+        ===================\n 
         Beam Length: {self.length}m
+        
+        {support_details}
+        {reaction_details}
+
+        Significant values:
+        ===================\n 
         Shear Force(kN):
         \t Maximum: {self.max_sf}\t\tPosition: {self.posx_maxsf}m
         \t Minimum: {self.min_sf}\t\tPosition: {self.posx_minsf}m
@@ -808,6 +831,7 @@ class Reaction:
 
     def __init__(self, pos: float, type: str, pos_sym: str):
         self.pos = pos
+        self.pos_sym = pos_sym
         # possible reaction values(initialize them as zeros):
         self.rx_val = 0
         self.ry_val = 0
@@ -815,12 +839,15 @@ class Reaction:
 
         self.type = type.lower()
         if self.type == 'roller' or self.type == 'r':
+            self.type = 'roller'
             # symbolic variable for that roller support
             self.ry_var = sp.Symbol(f"R_{pos_sym}_y")
         elif self.type == 'hinge' or self.type == 'h':
+            self.type = 'hinge'
             self.rx_var = sp.Symbol(f"R_{pos_sym}_x")
             self.ry_var = sp.Symbol(f"R_{pos_sym}_y")
         elif self.type == 'fixed' or self.type == 'f':
+            self.type = 'fixed'
             self.rx_var = sp.Symbol(f"R_{pos_sym}_x")
             self.ry_var = sp.Symbol(f"R_{pos_sym}_y")
             self.mom_var = sp.Symbol(f"M_{pos_sym}")
