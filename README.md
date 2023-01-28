@@ -115,7 +115,7 @@ Here are few optional keyword arguments
 | 8. | `generate_moment_equation` | `loads` | Pass in list(or tuple) of load generators to generate moment equation |
 | 9. | `generate_shear_values` | `loads` | Pass in list(or tuple) of load generators to generate shear force values along various points in beam specified by `ndivs` argument while creating beam object |
 | 10. | `generate_moment_values` | `loads`| Pass in list(or tuple) of load generators to generate bending moment values along various points in beam specified by `ndivs` argument while creating beam object |
-| 11. | `save_data` | `fname:str, format:str='txt'` | Saves numerical values of Shear Forces and Moment Values in text file |
+| 11. | `save_data` | `fname:str, fformat:str='txt'` | Saves numerical values of Shear Forces and Moment Values in text file for predefined number of points|
 | 12. | `generate_significant_values` | - | Generates salient values like maximum and minimum bending moment and shear force, contraflexures and other |
 
 
@@ -292,3 +292,7 @@ b.generate_graph(which='both', details=True, save_fig=True, show_graph=False, re
 **Graph**:
 
 ![Example 3](https://ashimp.com.np/beamframe/images/readme_example_3.png)
+
+
+## Any more examples required?
+> Contact [Here](https://www.ashimp.com.np/#contact)
