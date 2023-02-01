@@ -146,7 +146,7 @@ class Beam:
             elif isinstance(mom_gen, PointMoment):
                 self.m += mom_gen.mom
 
-    def add_hinge(self, hinge, mom_gens):
+    def add_hinge(self, hinge : object, mom_gens : object):
         """
         ### Description:
         Internal hinges are provided in beam to make structure more flexible and able to resist external moments.
@@ -336,7 +336,6 @@ class Beam:
 
         #### Arguments
         - `loads` = List or Tuple of various force generating objects:`PointLoad`, `Reaction`, `UDL` 
-        - `ndivs:int = 1000` = Number of values to generate
         """
 
         self.shear_values = np.zeros_like(self.xbeam)
@@ -373,7 +372,6 @@ class Beam:
 
         #### Arguments
         - `loads` = List or Tuple of various moment generating objects:`PointLoad`, `Reaction`, `UDL` or `PointMoment`
-        - `ndivs: int = 1000` = Number of values to generate.
         """
         self.moment_values = np.zeros_like(self.xbeam)
         macaulay = np.vectorize(SingularityFunction, otypes=[float])
@@ -449,17 +447,18 @@ class Beam:
         self.generate_moment_equation(loads_list)
         self.generate_moment_values(loads_list)
 
-    def generate_graph(self, which: str = 'both', save_fig: bool = False, filename=None, extension='png', res: str = 'low', show_graph: bool = True, **kwargs):
+    def generate_graph(self, which: str = 'both', save_fig: bool = False, filename: str = None, extension: str = 'png', res: str = 'low', show_graph: bool = True, **kwargs):
         """
         To generate bending moment diagram for beam with all reactions solved
         # Arguments:
         - `which:str ='both'` = To specify which graph to show. Default value = `'both'`
             - Accepted values `('bmd', 'sfd', 'both')`
         - `save_fig:bool` = To specify whether or not to save the generated image locally
-        - `save_path:str` = Relative or absolute of path to save the generate image
-            - `save_fig` and `save_path` must be used together
+        - `filename:str` = Name of file or file path to specify the location to save the generated image
+        - `extension: str = 'png' ` = File extension to save the generate image. Supported extensions are ` ('png', 'pdf', 'eps', 'svg')`. By default `png`.
         - `details: bool` = To specify whether or not to show salient features in graph like contraflexure, inflexion
-        - `DPI:int = 100` = Resolution of graph to be shown.
+        - `res: str = 'low'` = Resolution of graph to be shown or saved.
+        - `show_graph: bool = True` Whether or not to show the generate graph.
             - Note: Don't use res(values other than low) and `show_graph=True` together. It will create render error.
         """
         # Rc parameters:
@@ -614,7 +613,7 @@ class Beam:
         if show_graph:
             plt.show()
 
-    def save_data(self, fname: str, fformat: str = 'txt', reactions: list = [None]):
+    def save_data(self, fname: str, fformat: str = 'txt'):
         """
         ### Description
         Saves numerical values of Shear Forces and Moment Values in text file 
